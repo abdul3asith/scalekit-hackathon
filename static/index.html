@@ -7,425 +7,1148 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
-      .reply-prose { color: rgb(51 65 85); font-size: 0.875rem; line-height: 1.6; }
-      .reply-prose > * + * { margin-top: 0.65rem; }
-      .reply-prose > *:first-child { margin-top: 0; }
+      :root {
+        --kds-bg: #14110d;
+        --kds-bg-elev: #1d1a14;
+        --kds-rail: #2a261d;
+        --kds-rail-light: #3a3528;
+        --paper: #f3e7cb;
+        --paper-dim: #e6d5af;
+        --paper-deep: #d6c190;
+        --ink: #181410;
+        --ink-mid: #463b2a;
+        --ink-dim: #756446;
+        --line: rgba(24, 20, 16, 0.18);
+        --line-dashed: rgba(24, 20, 16, 0.32);
+        --idle: #7a6c5c;
+        --running: #d9831f;
+        --complete: #2f6f3a;
+        --error: #b8341c;
+        --founder: #5b3a8e;
+        --sde: #1f4e8e;
+        --hr: #2f6f3a;
+        --intern: #4f4738;
+      }
 
-      .reply-prose h1,
-      .reply-prose h2 {
+      html, body { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+      body {
+        background: var(--kds-bg);
+        background-image:
+          radial-gradient(ellipse at top, rgba(255,210,140,0.045), transparent 60%),
+          repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+        color: var(--paper);
+      }
+
+      .display { font-family: 'Anton', 'JetBrains Mono', sans-serif; letter-spacing: 0.03em; }
+      .typewriter { font-family: 'Special Elite', 'JetBrains Mono', monospace; }
+
+      /* === Top rail === */
+      .steel-rail {
+        background:
+          linear-gradient(to bottom, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.18) 100%),
+          var(--kds-bg-elev);
+        border-bottom: 1px solid var(--kds-rail);
+        box-shadow: 0 2px 0 #100d09;
+      }
+
+      .clock-display {
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ledger-meta {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.625rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--paper-deep);
+      }
+
+      /* === Paper ticket === */
+      .ticket {
+        background: var(--paper);
+        color: var(--ink);
+        position: relative;
+        box-shadow:
+          0 1px 0 rgba(255,255,255,0.04) inset,
+          0 2px 0 var(--paper-deep),
+          0 12px 28px -8px rgba(0,0,0,0.55),
+          0 30px 60px -30px rgba(0,0,0,0.4);
+      }
+      .ticket::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+          radial-gradient(rgba(0,0,0,0.025) 1px, transparent 1px);
+        background-size: 8px 8px, 16px 16px;
+        background-position: 0 0, 4px 4px;
+        opacity: 0.55;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+      }
+      .ticket > * { position: relative; z-index: 1; }
+
+      .ticket--founder { border-top: 4px solid var(--founder); }
+      .ticket--sde { border-top: 4px solid var(--sde); }
+      .ticket--hr { border-top: 4px solid var(--hr); }
+      .ticket--intern { border-top: 4px solid var(--intern); }
+
+      /* Perforation between sections */
+      .perforate {
+        position: relative;
+        border-top: 1px dashed var(--line-dashed);
+      }
+      .perforate::before, .perforate::after {
+        content: "";
+        position: absolute;
+        top: -8px;
+        width: 14px;
+        height: 14px;
+        background: var(--kds-bg);
+        border-radius: 50%;
+        z-index: 2;
+      }
+      .perforate::before { left: -7px; }
+      .perforate::after { right: -7px; }
+
+      /* === Section labels === */
+      .section-label {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.6875rem;
+        letter-spacing: 0.2em;
+        color: var(--ink-dim);
+      }
+      .section-label::before {
+        content: "▍";
+        margin-right: 0.5rem;
+        color: var(--ink-mid);
+      }
+
+      /* === Status flag === */
+      .kds-flag {
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.14em;
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem 0.5rem 1.25rem;
+        color: var(--paper);
+        background: var(--idle);
+        clip-path: polygon(0.75rem 0, 100% 0, 100% 100%, 0 100%);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+      .kds-flag::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        background: currentColor;
+        border-radius: 50%;
+        opacity: 0.9;
+      }
+      .kds-flag--idle { background: var(--idle); }
+      .kds-flag--running {
+        background: var(--running);
+        animation: pulse-flag 1.4s ease-in-out infinite;
+      }
+      .kds-flag--complete { background: var(--complete); }
+      .kds-flag--error { background: var(--error); }
+      @keyframes pulse-flag {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(217,131,31,0.45); }
+        50% { box-shadow: 0 0 0 8px rgba(217,131,31,0); }
+      }
+
+      /* === Role tab === */
+      .role-tab {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-family: 'Anton', sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+        color: var(--paper);
+        line-height: 1.25;
+      }
+      .role-tab--founder { background: var(--founder); }
+      .role-tab--sde { background: var(--sde); }
+      .role-tab--hr { background: var(--hr); }
+      .role-tab--intern { background: var(--intern); }
+
+      .ticket-no {
+        font-family: 'Special Elite', monospace;
         font-size: 0.9375rem;
-        font-weight: 600;
-        color: rgb(15 23 42);
-        letter-spacing: -0.01em;
-        margin-top: 1.25rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-mid);
+        white-space: nowrap;
+      }
+      .ticket-time {
+        font-family: 'JetBrains Mono', monospace;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.6875rem;
+        color: var(--ink-dim);
+        letter-spacing: 0.04em;
+      }
+
+      /* Scope chips */
+      .scope-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+        background: transparent;
+        border: 1px dashed var(--line-dashed);
+        color: var(--ink-dim);
+        border-radius: 2px;
+      }
+      .scope-chip::before {
+        content: "·";
+        font-weight: 700;
+        opacity: 0.5;
+      }
+      .scope-chip--on {
+        background: var(--ink);
+        color: var(--paper);
+        border-color: var(--ink);
+        border-style: solid;
+      }
+      .scope-chip--on::before { content: "▮"; opacity: 1; }
+      .scope-chip--role-founder { background: var(--founder); color: var(--paper); border-color: var(--founder); border-style: solid; }
+      .scope-chip--role-founder::before { content: "▮"; opacity: 1; }
+      .scope-chip--role-sde { background: var(--sde); color: var(--paper); border-color: var(--sde); border-style: solid; }
+      .scope-chip--role-sde::before { content: "▮"; opacity: 1; }
+      .scope-chip--role-hr { background: var(--hr); color: var(--paper); border-color: var(--hr); border-style: solid; }
+      .scope-chip--role-hr::before { content: "▮"; opacity: 1; }
+      .scope-chip--role-intern { background: var(--ink); color: var(--paper); border-color: var(--ink); border-style: solid; }
+      .scope-chip--role-intern::before { content: "▮"; opacity: 1; }
+
+      /* === Reply area === */
+      .kds-reply {
+        background: rgba(255,255,255,0.4);
+        border: 1px dashed var(--line-dashed);
+        padding: 0.875rem 1rem;
+        min-height: 16rem;
+        font-size: 0.8125rem;
+        line-height: 1.65;
+        color: var(--ink-mid);
+        white-space: pre-wrap;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .kds-reply--ready {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.18em;
+        color: var(--idle);
+        font-size: 0.875rem;
+      }
+      .kds-reply--ready::before {
+        content: "▸";
+        color: var(--complete);
+      }
+      .kds-reply--error {
+        background: rgba(184, 52, 28, 0.08);
+        border-color: var(--error);
+        border-style: solid;
+        color: var(--error);
+      }
+
+      .kds-reply--complete {
+        background: rgba(255,255,255,0.55);
+        border: 1px solid var(--paper-deep);
+        padding: 1rem 1.125rem;
+      }
+
+      /* === Tool log === */
+      .kds-toollog {
+        min-height: 16rem;
+        font-size: 0.75rem;
+        color: var(--ink-mid);
+      }
+      .kds-toollog--empty {
+        background: rgba(255,255,255,0.4);
+        border: 1px dashed var(--line-dashed);
+        padding: 0.875rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.16em;
+        color: var(--idle);
+        font-size: 0.875rem;
+      }
+      .kds-toollog--empty::before { content: "—"; }
+      .kds-tool-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.5rem 0.75rem;
+        padding: 0.625rem 0.75rem;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid var(--ink-mid);
+        background: rgba(255,255,255,0.4);
+        align-items: start;
+      }
+      .kds-tool-row:last-child { margin-bottom: 0; }
+      .kds-tool-row--allowed { border-left-color: var(--complete); }
+      .kds-tool-row--denied { border-left-color: var(--error); }
+      .kds-tool-icon {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.875rem;
+        padding: 0.0625rem 0.5rem;
+        color: var(--paper);
+        background: var(--ink-mid);
+        line-height: 1.4;
+      }
+      .kds-tool-row--allowed .kds-tool-icon { background: var(--complete); }
+      .kds-tool-row--denied .kds-tool-icon { background: var(--error); }
+      .kds-tool-action {
+        font-weight: 700;
+        color: var(--ink);
+        font-size: 0.8125rem;
+        word-break: break-word;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .kds-tool-result {
+        font-size: 0.6875rem;
+        color: var(--ink-dim);
+        margin-top: 0.25rem;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+
+      /* === Markdown reply prose === */
+      .reply-prose { color: var(--ink-mid); font-size: 0.8125rem; line-height: 1.65; font-family: 'JetBrains Mono', monospace; }
+      .reply-prose > * + * { margin-top: 0.625rem; }
+      .reply-prose > *:first-child { margin-top: 0; }
+      .reply-prose h1, .reply-prose h2 {
+        font-family: 'Anton', sans-serif;
+        font-size: 1rem;
+        letter-spacing: 0.06em;
+        color: var(--ink);
+        margin-top: 1.125rem;
         padding-bottom: 0.375rem;
-        border-bottom: 1px solid rgb(226 232 240);
+        border-bottom: 1px dashed var(--line-dashed);
         display: flex;
         align-items: center;
         gap: 0.5rem;
       }
-      .reply-prose h1::before,
-      .reply-prose h2::before {
-        content: "";
-        width: 0.1875rem;
-        height: 0.875rem;
-        background: var(--reply-accent, rgb(100 116 139));
-        border-radius: 999px;
-        flex-shrink: 0;
+      .reply-prose h1::before, .reply-prose h2::before {
+        content: "■";
+        color: var(--reply-accent, var(--ink-dim));
+        font-size: 0.75rem;
       }
       .reply-prose h3 {
+        font-family: 'Anton', sans-serif;
         font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.09em;
-        color: rgb(100 116 139);
+        letter-spacing: 0.2em;
+        color: var(--ink-dim);
         margin-top: 1rem;
       }
-      .reply-prose h4 {
-        font-size: 0.8125rem;
-        font-weight: 600;
-        color: rgb(30 41 59);
-        margin-top: 0.875rem;
-      }
-
+      .reply-prose h4 { font-size: 0.8125rem; font-weight: 700; color: var(--ink); margin-top: 0.875rem; }
       .reply-prose p { margin: 0; }
-      .reply-prose strong { color: rgb(15 23 42); font-weight: 600; }
-      .reply-prose em { color: rgb(71 85 105); }
-
+      .reply-prose strong { color: var(--ink); font-weight: 700; }
+      .reply-prose em { color: var(--ink-dim); font-style: italic; }
       .reply-prose code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-family: 'JetBrains Mono', monospace;
         font-size: 0.75rem;
         padding: 0.0625rem 0.375rem;
-        background: rgb(241 245 249);
-        color: rgb(15 23 42);
-        border-radius: 0.3125rem;
-        border: 1px solid rgb(226 232 240);
-        white-space: nowrap;
+        background: rgba(24,20,16,0.08);
+        color: var(--ink);
+        border-radius: 2px;
+        border: 1px solid rgba(24,20,16,0.1);
       }
       .reply-prose pre {
-        background: rgb(15 23 42);
-        color: rgb(226 232 240);
+        background: var(--ink);
+        color: var(--paper);
         padding: 0.75rem 0.875rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
         font-size: 0.75rem;
         line-height: 1.55;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        overflow-x: auto;
+        border-radius: 2px;
       }
-      .reply-prose pre code {
-        background: transparent;
-        border: 0;
-        padding: 0;
-        color: inherit;
-        white-space: pre;
-      }
-
-      .reply-prose ul,
-      .reply-prose ol {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-      }
-      .reply-prose ul > li,
-      .reply-prose ol > li {
-        position: relative;
-        padding-left: 1.125rem;
-        margin-top: 0.3125rem;
-      }
+      .reply-prose pre code { background: transparent; padding: 0; color: inherit; border: 0; }
+      .reply-prose ul, .reply-prose ol { list-style: none; padding-left: 0; margin: 0; }
+      .reply-prose ul > li, .reply-prose ol > li { position: relative; padding-left: 1.125rem; margin-top: 0.25rem; }
       .reply-prose ul > li::before {
-        content: "";
-        position: absolute;
-        left: 0.1875rem;
-        top: 0.6875rem;
-        width: 0.3125rem;
-        height: 0.3125rem;
-        background: var(--reply-accent, rgb(100 116 139));
-        transform: rotate(45deg);
-        border-radius: 0.5px;
+        content: ">";
+        position: absolute; left: 0; top: 0;
+        font-weight: 700; color: var(--reply-accent, var(--ink-dim));
       }
       .reply-prose ol { counter-reset: rp; }
       .reply-prose ol > li {
         counter-increment: rp;
-        padding-left: 1.375rem;
+        padding-left: 1.625rem;
       }
       .reply-prose ol > li::before {
-        content: counter(rp);
-        position: absolute;
-        left: 0;
-        top: 0.125rem;
-        min-width: 1rem;
-        text-align: right;
+        content: counter(rp, decimal-leading-zero);
+        position: absolute; left: 0; top: 0;
+        font-weight: 700; color: var(--reply-accent, var(--ink-dim));
         font-size: 0.6875rem;
-        font-weight: 700;
-        color: var(--reply-accent, rgb(100 116 139));
-        font-variant-numeric: tabular-nums;
       }
-      .reply-prose li > ul,
-      .reply-prose li > ol { margin-top: 0.25rem; }
-      .reply-prose li > p { display: inline; }
-
       .reply-prose blockquote {
-        border-left: 2px solid var(--reply-accent, rgb(148 163 184));
+        border-left: 2px solid var(--reply-accent, var(--ink-dim));
         padding: 0.125rem 0 0.125rem 0.75rem;
-        color: rgb(71 85 105);
+        color: var(--ink-dim);
         font-style: italic;
       }
-      .reply-prose hr {
-        border: 0;
-        border-top: 1px dashed rgb(203 213 225);
-        margin: 0.75rem 0;
-      }
-      .reply-prose a {
-        color: rgb(15 23 42);
-        text-decoration: underline;
-        text-decoration-color: var(--reply-accent, rgb(148 163 184));
-        text-decoration-thickness: 1.5px;
-        text-underline-offset: 2px;
-        font-weight: 500;
-      }
-      .reply-prose a:hover { text-decoration-color: rgb(15 23 42); }
+      .reply-prose hr { border: 0; border-top: 1px dashed var(--line-dashed); margin: 0.75rem 0; }
+      .reply-prose a { color: var(--ink); text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--reply-accent, var(--ink-dim)); text-underline-offset: 3px; font-weight: 600; }
+      .reply-prose table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+      .reply-prose th, .reply-prose td { padding: 0.4rem 0.5rem; border-bottom: 1px dashed var(--line-dashed); text-align: left; }
+      .reply-prose th { font-family: 'Anton', sans-serif; font-size: 0.6875rem; letter-spacing: 0.12em; color: var(--ink-dim); }
 
-      .reply-prose table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8125rem;
+      .agent-panel[data-user-id="founder"] { --reply-accent: var(--founder); }
+      .agent-panel[data-user-id="sde"] { --reply-accent: var(--sde); }
+      .agent-panel[data-user-id="hr"] { --reply-accent: var(--hr); }
+      .agent-panel[data-user-id="intern"] { --reply-accent: var(--intern); }
+
+      /* === Spinner: "firing" state === */
+      .kds-spinner-host {
+        min-height: 16rem;
+        background: rgba(217,131,31,0.08);
+        border: 1px dashed var(--running);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.625rem;
       }
-      .reply-prose th,
-      .reply-prose td {
-        text-align: left;
-        padding: 0.4375rem 0.625rem;
-        border-bottom: 1px solid rgb(226 232 240);
-      }
-      .reply-prose th {
-        background: rgb(248 250 252);
-        font-weight: 600;
-        color: rgb(15 23 42);
-        font-size: 0.6875rem;
+      .kds-spinner-text {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.9375rem;
+        letter-spacing: 0.2em;
+        color: var(--running);
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+      }
+      .kds-spinner-dots { display: inline-flex; gap: 4px; }
+      .kds-spinner-dots span {
+        display: block;
+        width: 8px; height: 8px;
+        background: var(--running);
+        animation: spinner-dot 0.9s ease-in-out infinite;
+      }
+      .kds-spinner-dots span:nth-child(2) { animation-delay: 0.15s; }
+      .kds-spinner-dots span:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes spinner-dot {
+        0%, 100% { transform: translateY(0); opacity: 0.4; }
+        50% { transform: translateY(-5px); opacity: 1; }
       }
 
-      .agent-panel[data-user-id="founder"] { --reply-accent: rgb(147 51 234); }
-      .agent-panel[data-user-id="sde"] { --reply-accent: rgb(37 99 235); }
-      .agent-panel[data-user-id="hr"] { --reply-accent: rgb(5 150 105); }
-      .agent-panel[data-user-id="intern"] { --reply-accent: rgb(71 85 105); }
+      /* === Roster (sidebar) === */
+      .roster-card {
+        background: var(--paper);
+        color: var(--ink);
+        position: relative;
+        padding: 0.875rem 1rem;
+        border-left: 3px solid var(--ink-dim);
+        box-shadow: 0 1px 0 var(--paper-deep);
+      }
+      .roster-card--founder { border-left-color: var(--founder); }
+      .roster-card--sde { border-left-color: var(--sde); }
+      .roster-card--hr { border-left-color: var(--hr); }
+      .roster-card--intern { border-left-color: var(--intern); }
+      .roster-card.is-revoked { opacity: 0.55; filter: saturate(0.6); }
+
+      .kds-org-status {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.6875rem;
+        letter-spacing: 0.16em;
+        padding: 0.25rem 0.625rem;
+        color: var(--paper);
+        white-space: nowrap;
+      }
+      .kds-org-status--active { background: var(--complete); }
+      .kds-org-status--upgraded { background: var(--running); }
+      .kds-org-status--revoked { background: var(--error); }
+
+      /* === Action buttons === */
+      .kds-action-btn {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.16em;
+        padding: 0.5rem 0.75rem;
+        background: var(--ink);
+        color: var(--paper);
+        border: 1px solid var(--ink);
+        cursor: pointer;
+        transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        width: 100%;
+        text-transform: uppercase;
+      }
+      .kds-action-btn:hover:not(:disabled) { background: var(--paper); color: var(--ink); }
+      .kds-action-btn:disabled { background: var(--paper-dim); color: var(--ink-dim); border-color: var(--paper-deep); cursor: not-allowed; }
+      .kds-action-btn--alert { background: var(--running); border-color: var(--running); }
+      .kds-action-btn--alert:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+      .kds-action-btn--success { background: var(--complete); border-color: var(--complete); color: var(--paper); cursor: default; }
+      .kds-action-btn--success:disabled { background: var(--complete); border-color: var(--complete); color: var(--paper); }
+      .kds-action-btn--danger { background: var(--error); border-color: var(--error); }
+      .kds-action-btn--sent { background: var(--paper-deep); border-color: var(--paper-deep); color: var(--ink-dim); cursor: not-allowed; }
+
+      /* === Fire line (prompt form) === */
+      .fire-line {
+        background: var(--paper);
+        color: var(--ink);
+        position: relative;
+        border-top: 4px solid var(--running);
+      }
+      .fire-prompt {
+        background: rgba(24,20,16,0.05);
+        border: 1px dashed var(--line-dashed);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        color: var(--ink);
+        padding: 0.875rem 1rem;
+        resize: vertical;
+        min-height: 5.5rem;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.15s, background-color 0.15s;
+      }
+      .fire-prompt:focus { border-color: var(--ink); background: rgba(255,255,255,0.5); border-style: solid; }
+      .fire-prompt::placeholder { color: var(--ink-dim); }
+
+      .fire-button {
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.18em;
+        font-size: 1.0625rem;
+        padding: 0.875rem 1.75rem;
+        background: var(--ink);
+        color: var(--paper);
+        border: 0;
+        cursor: pointer;
+        transition: background-color 0.15s;
+        position: relative;
+        white-space: nowrap;
+        text-transform: uppercase;
+        height: 100%;
+      }
+      .fire-button:hover:not(:disabled) { background: var(--running); }
+      .fire-button:disabled { background: var(--paper-deep); color: var(--ink-dim); cursor: not-allowed; }
+
+      .quick-chip {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.6875rem;
+        letter-spacing: 0.04em;
+        padding: 0.4375rem 0.75rem;
+        background: transparent;
+        border: 1px dashed var(--line-dashed);
+        color: var(--ink-mid);
+        cursor: pointer;
+        transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+      }
+      .quick-chip:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); border-style: solid; }
+
+      /* === Audit drawer === */
+      .audit-drawer {
+        background: var(--kds-bg-elev);
+        border-top: 2px solid var(--running);
+        box-shadow: 0 -20px 40px -10px rgba(0,0,0,0.7);
+      }
+      #audit-toggle {
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        color: inherit;
+        padding: 0;
+        font: inherit;
+        transition: background-color 0.15s;
+      }
+      #audit-toggle:focus-visible {
+        outline: 2px solid var(--running);
+        outline-offset: -4px;
+      }
+      .audit-grab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 22px;
+        background: linear-gradient(to bottom, rgba(217,131,31,0.2), transparent);
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+      }
+      .audit-grab:active { cursor: grabbing; }
+      .audit-grab::after {
+        content: "";
+        width: 72px;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--running);
+        opacity: 0.95;
+      }
+      #audit-toggle:hover .audit-grab::after {
+        opacity: 1;
+        width: 92px;
+      }
+      .audit-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.875rem 1.25rem 1rem;
+        color: var(--paper);
+        transition: background-color 0.15s;
+      }
+      #audit-toggle:hover .audit-toggle {
+        background: rgba(217,131,31,0.08);
+      }
+      .audit-toggle-right {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        color: var(--running);
+        border: 1px solid var(--running);
+        background: rgba(217,131,31,0.1);
+        transition: background-color 0.15s, color 0.15s;
+        flex-shrink: 0;
+      }
+      #audit-toggle:hover .audit-toggle-right {
+        background: var(--running);
+        color: var(--kds-bg);
+      }
+      .audit-chev {
+        position: relative;
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        transition: transform 0.25s ease;
+      }
+      .audit-chev::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 1px;
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(-135deg);
+      }
+      .audit-chev.is-open { transform: rotate(180deg); }
+      .audit-row {
+        padding: 0.625rem 0.875rem;
+        border-left: 3px solid var(--idle);
+        background: rgba(243, 231, 203, 0.05);
+        color: var(--paper);
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+      .audit-row:last-child { margin-bottom: 0; }
+      .audit-row--allowed { border-left-color: var(--complete); background: rgba(47,111,58,0.1); }
+      .audit-row--denied { border-left-color: var(--error); background: rgba(184,52,28,0.1); }
+      .audit-row--new { animation: audit-highlight 1.4s ease; }
+      @keyframes audit-highlight {
+        0% { background: rgba(217,131,31,0.32); }
+        100% {}
+      }
+
+      .role-badge {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.6875rem;
+        letter-spacing: 0.14em;
+        padding: 0.125rem 0.5rem;
+        color: var(--paper);
+        line-height: 1.4;
+      }
+      .role-badge--founder { background: var(--founder); }
+      .role-badge--sde { background: var(--sde); }
+      .role-badge--hr { background: var(--hr); }
+      .role-badge--intern { background: var(--intern); }
+
+      /* === Layout helpers === */
+      .display-headline { font-family: 'Anton', sans-serif; letter-spacing: 0.02em; line-height: 1; }
+
+      .screen-scan { position: relative; }
+      .screen-scan::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px);
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      .scope-request-slot {
+        background: rgba(217,131,31,0.12);
+        border-top: 1px dashed var(--running);
+        padding: 0.875rem 1.125rem 1.125rem;
+        color: var(--ink);
+      }
+      .scope-request-slot p:first-child {
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.1em;
+        font-size: 0.8125rem;
+        color: var(--ink);
+        text-transform: uppercase;
+      }
+      .scope-request-slot p + p {
+        font-size: 0.75rem;
+        color: var(--ink-mid);
+        margin-top: 0.25rem;
+      }
+
+      .upgrade-queue {
+        background: rgba(217,131,31,0.12);
+        color: var(--ink);
+        padding: 0.875rem 1rem 1.125rem;
+        border-top: 1px solid var(--paper-deep);
+        border-bottom: 1px solid var(--paper-deep);
+      }
+      .upgrade-queue p:first-child {
+        font-family: 'Anton', sans-serif;
+        letter-spacing: 0.16em;
+        font-size: 0.6875rem;
+        color: var(--running);
+        text-transform: uppercase;
+      }
+      .upgrade-queue p + p {
+        font-size: 0.75rem;
+        color: var(--ink-mid);
+        margin-top: 0.375rem;
+        line-height: 1.55;
+      }
+
+      .roster-shell {
+        background: var(--paper);
+        color: var(--ink);
+        position: relative;
+        box-shadow:
+          0 2px 0 var(--paper-deep),
+          0 12px 28px -10px rgba(0,0,0,0.45);
+      }
+      .roster-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+        background-size: 12px 12px;
+        opacity: 0.35;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+      }
+      .roster-shell > * { position: relative; z-index: 1; }
+
+      .roster-header {
+        padding: 1rem 1.125rem 0.875rem;
+        border-bottom: 1px dashed var(--line-dashed);
+      }
+      .roster-header p:first-child {
+        font-family: 'Anton', sans-serif;
+        font-size: 0.6875rem;
+        letter-spacing: 0.22em;
+        color: var(--ink-dim);
+        text-transform: uppercase;
+      }
+      .roster-header h2 {
+        font-family: 'Anton', sans-serif;
+        font-size: 1.5rem;
+        color: var(--ink);
+        letter-spacing: 0.04em;
+        margin-top: 0.25rem;
+      }
+      .roster-header p:last-child {
+        font-size: 0.75rem;
+        color: var(--ink-mid);
+        line-height: 1.55;
+        margin-top: 0.5rem;
+      }
+
+      /* Ticket header internals */
+      .ticket-head {
+        padding: 0.875rem 1.125rem 0.75rem;
+      }
+      .ticket-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.625rem;
+      }
+      .ticket-station {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .ticket-station h2 {
+        font-family: 'Anton', sans-serif;
+        font-size: 1.875rem;
+        line-height: 1;
+        color: var(--ink);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .ticket-station .token-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: var(--ink-dim);
+        letter-spacing: 0.04em;
+      }
+
+      .ticket-body {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem 1.125rem 1.125rem;
+      }
+      @media (min-width: 1280px) {
+        .ticket-body { grid-template-columns: 1fr 1fr; }
+      }
+
+      /* Brand emblem: four bars representing four blast radii */
+      .brand-emblem {
+        background: var(--paper);
+        padding: 0.75rem 0.625rem;
+        line-height: 0;
+        clip-path: polygon(0 0, 100% 0, 100% 80%, 88% 100%, 12% 100%, 0 80%);
+      }
+      .brand-emblem-bars {
+        display: inline-flex;
+        gap: 4px;
+        align-items: end;
+      }
+      .brand-emblem-bars > span {
+        display: block;
+        width: 5px;
+        background: var(--ink);
+      }
+      .brand-emblem-bars > span:nth-child(1) { height: 8px; background: var(--founder); }
+      .brand-emblem-bars > span:nth-child(2) { height: 14px; background: var(--sde); }
+      .brand-emblem-bars > span:nth-child(3) { height: 20px; background: var(--hr); }
+      .brand-emblem-bars > span:nth-child(4) { height: 26px; background: var(--intern); }
+
+      /* Decorative dash line */
+      .dash-line {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--ink-dim);
+        letter-spacing: 0.16em;
+        font-size: 0.625rem;
+        line-height: 1;
+        opacity: 0.7;
+      }
+
+      .hidden { display: none !important; }
     </style>
   </head>
-  <body class="min-h-screen bg-slate-50 pb-24 text-slate-950">
-    <main class="mx-auto min-h-screen w-full max-w-7xl px-5 py-6 md:px-8">
-      <header class="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Scalekit-connected GitHub agents</p>
-          <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">One prompt, four blast radii</h1>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          Scalekit supplies the delegated GitHub tokens. The app-layer gate decides what each role can do.
-        </div>
-      </header>
-
-      <section class="grid gap-5 xl:grid-cols-[320px_1fr]">
-        <aside class="rounded-lg border border-slate-200 bg-white shadow-sm xl:sticky xl:top-6 xl:self-start">
-          <div class="border-b border-slate-200 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Org settings</p>
-            <h2 class="mt-1 text-lg font-semibold text-slate-950">Agent access</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Static control plane for the demo. Revokes update this panel only.</p>
+  <body class="min-h-screen pb-28 screen-scan">
+    <!-- Top steel rail -->
+    <header class="steel-rail">
+      <div class="mx-auto flex max-w-[1480px] flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-8">
+        <div class="flex items-center gap-4">
+          <div class="brand-emblem" aria-hidden="true">
+            <span class="brand-emblem-bars"><span></span><span></span><span></span><span></span></span>
           </div>
-          <div id="upgrade-queue" class="hidden border-b border-slate-200 bg-amber-50 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">SDE notification</p>
-            <p id="upgrade-message" class="mt-2 text-sm leading-6 text-amber-900"></p>
-            <button id="approve-upgrade" class="mt-3 w-full rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700" type="button">
+          <div>
+            <p class="ledger-meta">Scalekit-connected GitHub agents</p>
+            <h1 class="display-headline mt-1 text-3xl text-[color:var(--paper)] md:text-4xl">One prompt, four blast radii</h1>
+          </div>
+        </div>
+        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:items-stretch">
+          <div class="border border-[color:var(--kds-rail-light)] bg-[color:var(--kds-bg)] px-3 py-2.5 text-[0.6875rem] leading-relaxed text-[color:var(--paper-dim)] sm:max-w-sm">
+            Scalekit supplies the delegated GitHub tokens. The app-layer gate decides what each role can do.
+          </div>
+          <div class="flex flex-col items-center justify-center border border-[color:var(--kds-rail-light)] bg-[color:var(--kds-bg)] px-4 py-2">
+            <span id="kds-clock" class="clock-display text-2xl text-[color:var(--running)]">--:--:--</span>
+            <span id="kds-date" class="ledger-meta mt-0.5">— — —</span>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-[color:var(--kds-rail)] bg-[color:var(--kds-bg)]">
+        <div class="mx-auto flex max-w-[1480px] items-center gap-3 px-5 py-2 lg:px-8">
+          <span class="dash-line block flex-1 overflow-hidden whitespace-nowrap">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-[1480px] px-5 py-6 lg:px-8">
+      <section class="grid gap-6 xl:grid-cols-[320px_1fr]">
+        <!-- Sidebar: Roster / Org settings -->
+        <aside class="roster-shell xl:sticky xl:top-6 xl:self-start">
+          <div class="roster-header">
+            <p>Org settings</p>
+            <h2>Agent access</h2>
+            <p>Static control plane for the demo. Revokes update this panel only.</p>
+          </div>
+          <div id="upgrade-queue" class="upgrade-queue hidden">
+            <p>SDE notification</p>
+            <p id="upgrade-message"></p>
+            <button id="approve-upgrade" class="kds-action-btn kds-action-btn--alert mt-3" type="button">
               Approve write access
             </button>
           </div>
           <div class="space-y-3 p-4">
-            <article class="org-user rounded-md border border-purple-200 bg-purple-50/40 p-3" data-org-user="founder">
+            <article class="org-user roster-card roster-card--founder" data-org-user="founder">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <h3 class="font-semibold text-slate-950">Founder</h3>
-                  <p class="text-xs text-slate-500">Admin token</p>
+                  <h3 class="display text-lg text-[color:var(--ink)]">Founder</h3>
+                  <p class="text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--ink-dim)]">Admin token</p>
                 </div>
-                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+                <span class="org-status kds-org-status kds-org-status--active">Active</span>
               </div>
               <div class="mt-3 flex flex-wrap gap-1.5">
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: read</span>
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: write</span>
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: admin</span>
+                <span class="scope-chip scope-chip--role-founder">code: read</span>
+                <span class="scope-chip scope-chip--role-founder">code: write</span>
+                <span class="scope-chip scope-chip--role-founder">code: admin</span>
               </div>
-              <button class="org-revoke mt-3 w-full rounded-md border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800 transition hover:border-purple-400" type="button">Revoke</button>
+              <button class="org-revoke kds-action-btn mt-3" type="button">Revoke</button>
             </article>
 
-            <article class="org-user rounded-md border border-blue-200 bg-blue-50/40 p-3" data-org-user="sde">
+            <article class="org-user roster-card roster-card--sde" data-org-user="sde">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <h3 class="font-semibold text-slate-950">SDE</h3>
-                  <p class="text-xs text-slate-500">Write token</p>
+                  <h3 class="display text-lg text-[color:var(--ink)]">SDE</h3>
+                  <p class="text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--ink-dim)]">Write token</p>
                 </div>
-                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+                <span class="org-status kds-org-status kds-org-status--active">Active</span>
               </div>
               <div class="mt-3 flex flex-wrap gap-1.5">
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-blue-800 ring-1 ring-blue-200">code: read</span>
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-blue-800 ring-1 ring-blue-200">code: write</span>
+                <span class="scope-chip scope-chip--role-sde">code: read</span>
+                <span class="scope-chip scope-chip--role-sde">code: write</span>
               </div>
-              <button class="org-revoke mt-3 w-full rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-800 transition hover:border-blue-400" type="button">Revoke</button>
+              <button class="org-revoke kds-action-btn mt-3" type="button">Revoke</button>
             </article>
 
-            <article class="org-user rounded-md border border-emerald-200 bg-emerald-50/40 p-3" data-org-user="hr">
+            <article class="org-user roster-card roster-card--hr" data-org-user="hr">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <h3 class="font-semibold text-slate-950">HR</h3>
-                  <p class="text-xs text-slate-500">Handbook writer</p>
+                  <h3 class="display text-lg text-[color:var(--ink)]">HR</h3>
+                  <p class="text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--ink-dim)]">Handbook writer</p>
                 </div>
-                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+                <span class="org-status kds-org-status kds-org-status--active">Active</span>
               </div>
               <div class="mt-3 flex flex-wrap gap-1.5">
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-emerald-800 ring-1 ring-emerald-200">code: read</span>
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-emerald-800 ring-1 ring-emerald-200">handbook: write</span>
+                <span class="scope-chip scope-chip--role-hr">code: read</span>
+                <span class="scope-chip scope-chip--role-hr">handbook: write</span>
               </div>
-              <button class="org-revoke mt-3 w-full rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400" type="button">Revoke</button>
+              <button class="org-revoke kds-action-btn mt-3" type="button">Revoke</button>
             </article>
 
-            <article class="org-user rounded-md border border-slate-200 bg-slate-50 p-3" data-org-user="intern">
+            <article class="org-user roster-card roster-card--intern" data-org-user="intern">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <h3 class="font-semibold text-slate-950">Intern</h3>
-                  <p class="text-xs text-slate-500">Public read only</p>
+                  <h3 class="display text-lg text-[color:var(--ink)]">Intern</h3>
+                  <p class="text-[0.6875rem] uppercase tracking-[0.16em] text-[color:var(--ink-dim)]">Public read only</p>
                 </div>
-                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+                <span class="org-status kds-org-status kds-org-status--active">Active</span>
               </div>
               <div class="mt-3 flex flex-wrap gap-1.5">
-                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">code: read</span>
-                <span id="intern-write-scope" class="hidden rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">code: write</span>
+                <span class="scope-chip scope-chip--role-intern">code: read</span>
+                <span id="intern-write-scope" class="scope-chip scope-chip--role-intern hidden">code: write</span>
               </div>
-              <button class="org-revoke mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500" type="button">Revoke</button>
+              <button class="org-revoke kds-action-btn mt-3" type="button">Revoke</button>
             </article>
           </div>
         </aside>
 
+        <!-- Main column: fire line + tickets -->
         <div>
-          <section class="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <form id="run-form" class="grid gap-3 lg:grid-cols-[1fr_auto]">
-              <textarea
-                id="shared-prompt"
-                class="min-h-24 resize-none rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-950 outline-none ring-slate-900 transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2"
-                autocomplete="off"
-              >Triage what's open and act on it</textarea>
-              <button
-                id="run-button"
-                class="h-12 rounded-md bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 lg:h-auto"
-                type="submit"
-              >
-                Run on all agents
-              </button>
-            </form>
+          <!-- Fire line (prompt form) -->
+          <section class="fire-line mb-6">
+            <div class="flex items-center gap-3 border-b border-dashed border-[color:var(--line-dashed)] px-4 py-2">
+              <span class="dash-line block flex-1 overflow-hidden whitespace-nowrap">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+            </div>
+            <div class="p-4">
+              <form id="run-form" class="grid gap-3 lg:grid-cols-[1fr_auto]">
+                <textarea
+                  id="shared-prompt"
+                  class="fire-prompt"
+                  autocomplete="off"
+                >Triage what's open and act on it</textarea>
+                <button
+                  id="run-button"
+                  class="fire-button"
+                  type="submit"
+                >
+                  Run on all agents
+                </button>
+              </form>
 
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Triage what's open and act on it">Triage what's open</button>
-              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
-              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button class="prompt-chip quick-chip" type="button" data-prompt="Triage what's open and act on it">Triage what's open</button>
+                <button class="prompt-chip quick-chip" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
+                <button class="prompt-chip quick-chip" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
+              </div>
             </div>
           </section>
 
-          <section id="agent-grid" class="grid gap-4 lg:grid-cols-2">
-        <article class="agent-panel rounded-lg border border-purple-200 bg-white shadow-sm" data-user-id="founder">
-          <div class="border-l-4 border-purple-500 p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-lg font-semibold text-slate-950">Founder</h2>
-                <p class="text-sm text-slate-500">Admin token</p>
+          <!-- Ticket board -->
+          <section id="agent-grid" class="grid gap-5 lg:grid-cols-2">
+            <article class="agent-panel ticket ticket--founder" data-user-id="founder" data-ticket-no="001">
+              <div class="ticket-head">
+                <div class="ticket-meta-row">
+                  <div class="flex items-center gap-2.5">
+                    <span class="role-tab role-tab--founder">FOUNDER</span>
+                    <span class="ticket-no">#001</span>
+                    <span class="ticket-time" data-ticket-time="founder">--:--:--</span>
+                  </div>
+                  <span class="status-badge kds-flag kds-flag--idle">Idle</span>
+                </div>
+                <div class="ticket-station">
+                  <h2>Founder</h2>
+                  <span class="token-tag">Admin token</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  <span class="scope-chip scope-chip--on">code: read</span>
+                  <span class="scope-chip scope-chip--on">code: write</span>
+                  <span class="scope-chip scope-chip--on">code: admin</span>
+                  <span class="scope-chip">handbook: read</span>
+                </div>
               </div>
-              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: read</span>
-              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: write</span>
-              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: admin</span>
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">handbook: read</span>
-            </div>
-          </div>
-          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
-              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
-            </section>
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
-              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
-            </section>
-          </div>
-        </article>
+              <div class="ticket-body perforate">
+                <section>
+                  <h3 class="section-label">Agent Reply</h3>
+                  <div class="reply kds-reply kds-reply--ready mt-2">Ready.</div>
+                </section>
+                <section>
+                  <h3 class="section-label">Tool Log</h3>
+                  <div class="tool-log kds-toollog kds-toollog--empty mt-2">No tool calls yet.</div>
+                </section>
+              </div>
+            </article>
 
-        <article class="agent-panel rounded-lg border border-blue-200 bg-white shadow-sm" data-user-id="sde">
-          <div class="border-l-4 border-blue-500 p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-lg font-semibold text-slate-950">SDE</h2>
-                <p class="text-sm text-slate-500">Write token</p>
+            <article class="agent-panel ticket ticket--sde" data-user-id="sde" data-ticket-no="002">
+              <div class="ticket-head">
+                <div class="ticket-meta-row">
+                  <div class="flex items-center gap-2.5">
+                    <span class="role-tab role-tab--sde">SDE</span>
+                    <span class="ticket-no">#002</span>
+                    <span class="ticket-time" data-ticket-time="sde">--:--:--</span>
+                  </div>
+                  <span class="status-badge kds-flag kds-flag--idle">Idle</span>
+                </div>
+                <div class="ticket-station">
+                  <h2>SDE</h2>
+                  <span class="token-tag">Write token</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  <span class="scope-chip scope-chip--on">code: read</span>
+                  <span class="scope-chip scope-chip--on">code: write</span>
+                  <span class="scope-chip">handbook: read</span>
+                </div>
               </div>
-              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">code: read</span>
-              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">code: write</span>
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">handbook: read</span>
-            </div>
-          </div>
-          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
-              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
-            </section>
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
-              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
-            </section>
-          </div>
-        </article>
+              <div class="ticket-body perforate">
+                <section>
+                  <h3 class="section-label">Agent Reply</h3>
+                  <div class="reply kds-reply kds-reply--ready mt-2">Ready.</div>
+                </section>
+                <section>
+                  <h3 class="section-label">Tool Log</h3>
+                  <div class="tool-log kds-toollog kds-toollog--empty mt-2">No tool calls yet.</div>
+                </section>
+              </div>
+            </article>
 
-        <article class="agent-panel rounded-lg border border-emerald-200 bg-white shadow-sm" data-user-id="hr">
-          <div class="border-l-4 border-emerald-500 p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-lg font-semibold text-slate-950">HR</h2>
-                <p class="text-sm text-slate-500">Code reader, handbook writer</p>
+            <article class="agent-panel ticket ticket--hr" data-user-id="hr" data-ticket-no="003">
+              <div class="ticket-head">
+                <div class="ticket-meta-row">
+                  <div class="flex items-center gap-2.5">
+                    <span class="role-tab role-tab--hr">HR</span>
+                    <span class="ticket-no">#003</span>
+                    <span class="ticket-time" data-ticket-time="hr">--:--:--</span>
+                  </div>
+                  <span class="status-badge kds-flag kds-flag--idle">Idle</span>
+                </div>
+                <div class="ticket-station">
+                  <h2>HR</h2>
+                  <span class="token-tag">Code reader, handbook writer</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  <span class="scope-chip scope-chip--on">code: read</span>
+                  <span class="scope-chip scope-chip--on">handbook: read</span>
+                  <span class="scope-chip scope-chip--on">handbook: write</span>
+                </div>
               </div>
-              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">code: read</span>
-              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">handbook: read</span>
-              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">handbook: write</span>
-            </div>
-          </div>
-          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
-              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
-            </section>
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
-              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
-            </section>
-          </div>
-        </article>
+              <div class="ticket-body perforate">
+                <section>
+                  <h3 class="section-label">Agent Reply</h3>
+                  <div class="reply kds-reply kds-reply--ready mt-2">Ready.</div>
+                </section>
+                <section>
+                  <h3 class="section-label">Tool Log</h3>
+                  <div class="tool-log kds-toollog kds-toollog--empty mt-2">No tool calls yet.</div>
+                </section>
+              </div>
+            </article>
 
-        <article class="agent-panel rounded-lg border border-slate-300 bg-white shadow-sm" data-user-id="intern">
-          <div class="border-l-4 border-slate-500 p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h2 class="text-lg font-semibold text-slate-950">Intern</h2>
-                <p class="text-sm text-slate-500">Public read only</p>
+            <article class="agent-panel ticket ticket--intern" data-user-id="intern" data-ticket-no="004">
+              <div class="ticket-head">
+                <div class="ticket-meta-row">
+                  <div class="flex items-center gap-2.5">
+                    <span class="role-tab role-tab--intern">INTERN</span>
+                    <span class="ticket-no">#004</span>
+                    <span class="ticket-time" data-ticket-time="intern">--:--:--</span>
+                  </div>
+                  <span class="status-badge kds-flag kds-flag--idle">Idle</span>
+                </div>
+                <div class="ticket-station">
+                  <h2>Intern</h2>
+                  <span class="token-tag">Public read only</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  <span class="scope-chip scope-chip--on">code: read</span>
+                </div>
               </div>
-              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">code: read</span>
-            </div>
-          </div>
-          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
-              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
-            </section>
-            <section>
-              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
-              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
-            </section>
-          </div>
-          <div class="scope-request-slot hidden border-t border-slate-200 bg-amber-50 p-4">
-            <p class="text-sm font-semibold text-amber-950">I'd need write access to do this.</p>
-            <p class="mt-1 text-xs leading-5 text-amber-900">Request approval from SDE?</p>
-            <button class="request-upgrade mt-3 rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700" type="button">
-              Request from SDE
-            </button>
-          </div>
-        </article>
+              <div class="ticket-body perforate">
+                <section>
+                  <h3 class="section-label">Agent Reply</h3>
+                  <div class="reply kds-reply kds-reply--ready mt-2">Ready.</div>
+                </section>
+                <section>
+                  <h3 class="section-label">Tool Log</h3>
+                  <div class="tool-log kds-toollog kds-toollog--empty mt-2">No tool calls yet.</div>
+                </section>
+              </div>
+              <div class="scope-request-slot hidden">
+                <p>I'd need write access to do this.</p>
+                <p>Request approval from SDE?</p>
+                <button class="request-upgrade kds-action-btn kds-action-btn--alert mt-3" type="button">
+                  Request from SDE
+                </button>
+              </div>
+            </article>
           </section>
         </div>
       </section>
     </main>
 
-    <section id="audit-drawer" class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-300 bg-white shadow-2xl">
-      <button id="audit-toggle" class="flex w-full items-center justify-between px-5 py-3 text-left md:px-8" type="button">
-        <span>
-          <span class="block text-sm font-semibold text-slate-950">Audit Log — all agents, all actions</span>
-          <span id="audit-subtitle" class="block text-xs text-slate-500">No audit events yet.</span>
+    <!-- Audit drawer -->
+    <section id="audit-drawer" class="audit-drawer fixed inset-x-0 bottom-0 z-20">
+      <button id="audit-toggle" class="block w-full text-left" type="button" aria-controls="audit-content" aria-expanded="false">
+        <span class="audit-grab" aria-hidden="true"></span>
+        <span class="audit-toggle">
+          <span class="flex min-w-0 items-center gap-3">
+            <span class="display text-lg text-[color:var(--paper)] tracking-[0.05em]">Audit Log — all agents, all actions</span>
+            <span id="audit-subtitle" class="ledger-meta truncate text-[color:var(--paper-deep)]">No audit events yet.</span>
+          </span>
+          <span class="audit-toggle-right">
+            <span id="audit-chevron" class="audit-chev" aria-hidden="true"></span>
+          </span>
         </span>
-        <span id="audit-chevron" class="text-lg font-semibold text-slate-500">⌃</span>
       </button>
-      <div id="audit-content" class="hidden max-h-80 overflow-y-auto border-t border-slate-200 px-5 py-3 md:px-8">
-        <div id="audit-list" class="space-y-2 text-sm text-slate-700">
+      <div id="audit-content" class="hidden max-h-80 overflow-y-auto border-t border-[color:var(--kds-rail-light)] px-4 py-3 md:px-6">
+        <div id="audit-list" class="text-[color:var(--paper-dim)]">
           No audit events yet.
         </div>
       </div>
     </section>
 
     <template id="spinner-template">
-      <div class="flex min-h-64 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
-        <div class="flex items-center gap-3 text-sm font-medium text-slate-500">
-          <span class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></span>
-          Running agent
-        </div>
+      <div class="kds-spinner-host">
+        <div class="kds-spinner-text">Running agent</div>
+        <div class="kds-spinner-dots"><span></span><span></span><span></span></div>
       </div>
     </template>
 
@@ -451,6 +1174,8 @@
       const auditList = document.getElementById("audit-list");
       const auditSubtitle = document.getElementById("audit-subtitle");
       const auditChevron = document.getElementById("audit-chevron");
+      const clockEl = document.getElementById("kds-clock");
+      const dateEl = document.getElementById("kds-date");
       const panels = Object.fromEntries(
         Array.from(document.querySelectorAll(".agent-panel")).map((panel) => [panel.dataset.userId, panel])
       );
@@ -469,16 +1194,39 @@
           .replaceAll("'", "&#039;");
       }
 
+      function pad(n) { return String(n).padStart(2, "0"); }
+
+      function formatClock(d) {
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+
+      function formatDate(d) {
+        const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+        return `${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      }
+
+      function updateClock() {
+        const d = new Date();
+        if (clockEl) clockEl.textContent = formatClock(d);
+        if (dateEl) dateEl.textContent = formatDate(d);
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      function stampTicketTime(userId) {
+        const el = document.querySelector(`[data-ticket-time="${userId}"]`);
+        if (el) el.textContent = formatClock(new Date());
+      }
+
       function setStatus(panel, state) {
         const badge = panel.querySelector(".status-badge");
-        const classes = {
-          Idle: "bg-slate-100 text-slate-600",
-          Running: "bg-amber-100 text-amber-800",
-          Complete: "bg-emerald-100 text-emerald-800",
-          Error: "bg-red-100 text-red-800"
-        };
-
-        badge.className = `status-badge rounded-full px-3 py-1 text-xs font-medium ${classes[state] || classes.Idle}`;
+        const variant = {
+          Idle: "kds-flag--idle",
+          Running: "kds-flag--running",
+          Complete: "kds-flag--complete",
+          Error: "kds-flag--error"
+        }[state] || "kds-flag--idle";
+        badge.className = `status-badge kds-flag ${variant}`;
         badge.textContent = state;
       }
 
@@ -490,34 +1238,31 @@
         if (requestSlot) {
           requestSlot.classList.add("hidden");
         }
+        stampTicketTime(panel.dataset.userId);
         setStatus(panel, "Running");
       }
 
       function renderToolLog(panel, toolLog) {
         const toolLogEl = panel.querySelector(".tool-log");
-        toolLogEl.className = "tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700";
 
         if (!toolLog || toolLog.length === 0) {
+          toolLogEl.className = "tool-log kds-toollog kds-toollog--empty mt-2";
           toolLogEl.textContent = "No tool calls.";
           return;
         }
 
+        toolLogEl.className = "tool-log kds-toollog mt-2 space-y-0";
         toolLogEl.innerHTML = toolLog.map((entry) => {
           const icon = entry.allowed ? "✓" : "✗";
-          const badgeClass = entry.allowed
-            ? "bg-emerald-100 text-emerald-800 ring-emerald-200"
-            : "bg-red-100 text-red-800 ring-red-200";
+          const rowClass = entry.allowed ? "kds-tool-row--allowed" : "kds-tool-row--denied";
           const action = escapeHtml(entry.action || "unknown");
           const result = escapeHtml(entry.result_summary || "");
-
           return `
-            <div class="mb-2 rounded-md border border-slate-200 bg-white p-2.5 last:mb-0">
-              <div class="flex items-start gap-2">
-                <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${badgeClass}">${icon}</span>
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-semibold text-slate-900">${action}</p>
-                  <p class="mt-1 text-xs leading-5 text-slate-600">${result}</p>
-                </div>
+            <div class="kds-tool-row ${rowClass}">
+              <span class="kds-tool-icon">${icon}</span>
+              <div class="min-w-0">
+                <p class="kds-tool-action">${action}</p>
+                <p class="kds-tool-result">${result}</p>
               </div>
             </div>
           `;
@@ -533,7 +1278,7 @@
       function renderSuccess(userId, data) {
         const panel = panels[userId];
         const replyEl = panel.querySelector(".reply");
-        replyEl.className = "reply reply-prose mt-2 min-h-64 overflow-auto rounded-md border border-slate-200 bg-white p-4";
+        replyEl.className = "reply reply-prose kds-reply--complete mt-2 min-h-64 overflow-auto";
         replyEl.innerHTML = renderMarkdown(data.final_reply);
         renderToolLog(panel, data.tool_log || []);
         maybeShowUpgradeRequest(userId, data.tool_log || []);
@@ -544,8 +1289,8 @@
         const panel = panels[userId];
         const replyEl = panel.querySelector(".reply");
         const toolLogEl = panel.querySelector(".tool-log");
-        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800 font-mono";
-        toolLogEl.className = "tool-log mt-2 min-h-64 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800";
+        replyEl.className = "reply kds-reply kds-reply--error mt-2";
+        toolLogEl.className = "tool-log kds-toollog kds-toollog--empty mt-2";
         replyEl.textContent = `Request failed: ${error.message}`;
         toolLogEl.textContent = "No tool log returned.";
         setStatus(panel, "Error");
@@ -557,7 +1302,6 @@
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({user_id: userId, message})
         });
-
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Request failed");
@@ -566,15 +1310,11 @@
       }
 
       function maybeShowUpgradeRequest(userId, toolLog) {
-        if (userId !== "intern") {
-          return;
-        }
-
+        if (userId !== "intern") return;
         const deniedWrite = toolLog.some((entry) => {
           const decision = `${entry.scope_decision || ""} ${entry.result_summary || ""}`.toLowerCase();
           return entry.allowed === false && decision.includes("write");
         });
-
         const panel = panels.intern;
         const requestSlot = panel.querySelector(".scope-request-slot");
         if (deniedWrite) {
@@ -595,7 +1335,6 @@
             reason: "Intern needs write access for the requested GitHub action."
           })
         });
-
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Scope request failed");
@@ -604,37 +1343,30 @@
       }
 
       async function approveUpgradeRequest() {
-        if (!pendingUpgradeRequest) {
-          return;
-        }
-
+        if (!pendingUpgradeRequest) return;
         const response = await fetch(`/scope-requests/${pendingUpgradeRequest.id}/approve`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({approver_id: "sde"})
         });
-
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Approval failed");
         }
-
         pendingUpgradeRequest = data;
         upgradeMessage.textContent = "Approved. Intern now has code: write in the app-layer gate.";
         approveUpgradeButton.disabled = true;
         approveUpgradeButton.textContent = "Approved";
-        approveUpgradeButton.className = "mt-3 w-full cursor-not-allowed rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white";
+        approveUpgradeButton.className = "kds-action-btn kds-action-btn--success mt-3";
         internWriteScope.classList.remove("hidden");
 
         const internStatus = document.querySelector('[data-org-user="intern"] .org-status');
-        internStatus.className = "org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800";
+        internStatus.className = "org-status kds-org-status kds-org-status--upgraded";
         internStatus.textContent = "Upgraded";
       }
 
       async function revokeAgent(userId) {
-        const response = await fetch(`/users/${userId}/revoke`, {
-          method: "POST"
-        });
+        const response = await fetch(`/users/${userId}/revoke`, {method: "POST"});
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Revoke failed");
@@ -643,14 +1375,14 @@
       }
 
       function roleBadge(userId) {
-        const classes = {
-          founder: "bg-purple-100 text-purple-800 ring-purple-200",
-          sde: "bg-blue-100 text-blue-800 ring-blue-200",
-          hr: "bg-emerald-100 text-emerald-800 ring-emerald-200",
-          intern: "bg-slate-100 text-slate-800 ring-slate-200"
-        };
+        const variant = {
+          founder: "role-badge--founder",
+          sde: "role-badge--sde",
+          hr: "role-badge--hr",
+          intern: "role-badge--intern"
+        }[userId] || "role-badge--intern";
         const label = users.find((user) => user.id === userId)?.name || userId;
-        return `<span class="rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${classes[userId] || classes.intern}">${escapeHtml(label)}</span>`;
+        return `<span class="role-badge ${variant}">${escapeHtml(label)}</span>`;
       }
 
       function renderAudit(events, newIds) {
@@ -663,31 +1395,25 @@
 
         auditList.innerHTML = events.map((event) => {
           const id = auditId(event);
-          const allowedClass = event.allowed
-            ? "border-emerald-200 bg-emerald-50"
-            : "border-red-200 bg-red-50";
-          const dotClass = event.allowed ? "bg-emerald-500" : "bg-red-500";
-          const highlightClass = newIds.has(id) ? "ring-2 ring-amber-300" : "";
+          const rowClass = event.allowed ? "audit-row--allowed" : "audit-row--denied";
+          const newClass = newIds.has(id) ? "audit-row--new" : "";
           const time = new Date(event.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
+            hour: "2-digit", minute: "2-digit", second: "2-digit"
           });
           const result = escapeHtml(event.result_summary || "").slice(0, 180);
-
           return `
-            <div class="rounded-md border p-3 transition ${allowedClass} ${highlightClass}">
+            <div class="audit-row ${rowClass} ${newClass}">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-medium text-slate-500">${escapeHtml(time)}</span>
+                <span class="text-[0.6875rem] tabular-nums uppercase tracking-[0.12em] text-[color:var(--paper-deep)]">${escapeHtml(time)}</span>
                 ${roleBadge(event.user_id)}
-                <span class="font-semibold text-slate-950">${escapeHtml(event.action)}</span>
-                <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-600">
-                  <span class="h-2 w-2 rounded-full ${dotClass}"></span>
+                <span class="display text-[0.8125rem] tracking-[0.04em] text-[color:var(--paper)]">${escapeHtml(event.action)}</span>
+                <span class="inline-flex items-center gap-1 text-[0.6875rem] uppercase tracking-[0.12em] ${event.allowed ? "text-[color:var(--complete)]" : "text-[color:var(--error)]"}">
+                  <span class="h-2 w-2 rounded-full" style="background:${event.allowed ? "var(--complete)" : "var(--error)"}"></span>
                   ${event.allowed ? "allowed" : "denied"}
                 </span>
-                <span class="text-xs text-slate-500">requires ${escapeHtml(event.required_scope || "unknown")}</span>
+                <span class="text-[0.6875rem] uppercase tracking-[0.12em] text-[color:var(--paper-deep)]">requires ${escapeHtml(event.required_scope || "unknown")}</span>
               </div>
-              <p class="mt-2 text-xs leading-5 text-slate-700">${result}</p>
+              <p class="mt-2 text-[0.6875rem] leading-5 text-[color:var(--paper-dim)]">${result}</p>
             </div>
           `;
         }).join("");
@@ -699,10 +1425,7 @@
 
       async function fetchAudit() {
         const response = await fetch("/audit");
-        if (!response.ok) {
-          return;
-        }
-
+        if (!response.ok) return;
         const events = await response.json();
         if (!events.length) {
           if (Date.now() - auditLastUpdateAt > 5000) {
@@ -710,9 +1433,7 @@
           }
           return;
         }
-
         const newIds = new Set();
-
         events.forEach((event) => {
           const id = auditId(event);
           if (!auditEventIds.has(id)) {
@@ -720,22 +1441,27 @@
             auditEventIds.add(id);
           }
         });
-
         if (newIds.size > 0) {
           auditLastUpdateAt = Date.now();
         } else if (Date.now() - auditLastUpdateAt > 5000) {
           stopAuditPolling();
         }
-
         renderAudit(events, newIds);
         window.setTimeout(() => renderAudit(events, new Set()), 1200);
       }
 
+      function setDrawerOpen(open) {
+        auditDrawerOpen = open;
+        auditContent.classList.toggle("hidden", !open);
+        auditContent.style.height = "";
+        auditContent.style.maxHeight = "";
+        auditChevron.classList.toggle("is-open", open);
+        auditToggle.setAttribute("aria-expanded", String(open));
+      }
+
       function startAuditPolling() {
         stopAuditPolling();
-        auditDrawerOpen = true;
-        auditContent.classList.remove("hidden");
-        auditChevron.textContent = "⌄";
+        setDrawerOpen(true);
         auditLastUpdateAt = Date.now();
         fetchAudit();
         auditPollTimer = window.setInterval(fetchAudit, 1000);
@@ -748,10 +1474,61 @@
         }
       }
 
-      auditToggle.addEventListener("click", () => {
-        auditDrawerOpen = !auditDrawerOpen;
-        auditContent.classList.toggle("hidden", !auditDrawerOpen);
-        auditChevron.textContent = auditDrawerOpen ? "⌄" : "⌃";
+      let dragState = null;
+      let suppressNextClick = false;
+      const grabEl = document.querySelector(".audit-grab");
+      const DRAG_THRESHOLD = 5;
+      const MAX_DRAWER_HEIGHT = () => Math.min(window.innerHeight * 0.7, 640);
+
+      grabEl.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0 && e.pointerType === "mouse") return;
+        const startHeight = auditDrawerOpen ? auditContent.offsetHeight : 0;
+        dragState = {
+          pointerId: e.pointerId,
+          startY: e.clientY,
+          startHeight,
+          moved: false
+        };
+        try { grabEl.setPointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      grabEl.addEventListener("pointermove", (e) => {
+        if (!dragState || e.pointerId !== dragState.pointerId) return;
+        const dy = dragState.startY - e.clientY;
+        if (!dragState.moved && Math.abs(dy) < DRAG_THRESHOLD) return;
+        dragState.moved = true;
+        const newHeight = Math.max(0, Math.min(MAX_DRAWER_HEIGHT(), dragState.startHeight + dy));
+        auditContent.classList.remove("hidden");
+        auditContent.style.maxHeight = "none";
+        auditContent.style.height = `${newHeight}px`;
+      });
+
+      function endDrag(e) {
+        if (!dragState || e.pointerId !== dragState.pointerId) return;
+        const moved = dragState.moved;
+        try { grabEl.releasePointerCapture(e.pointerId); } catch (_) {}
+        dragState = null;
+        if (moved) {
+          suppressNextClick = true;
+          const finalHeight = auditContent.offsetHeight;
+          if (finalHeight > 64) {
+            setDrawerOpen(true);
+          } else {
+            setDrawerOpen(false);
+          }
+          e.preventDefault();
+        }
+      }
+      grabEl.addEventListener("pointerup", endDrag);
+      grabEl.addEventListener("pointercancel", endDrag);
+
+      auditToggle.addEventListener("click", (e) => {
+        if (suppressNextClick) {
+          suppressNextClick = false;
+          e.preventDefault();
+          return;
+        }
+        setDrawerOpen(!auditDrawerOpen);
       });
 
       orgRevokeButtons.forEach((button) => {
@@ -771,26 +1548,28 @@
             return;
           }
 
-          card.classList.add("opacity-60");
-          status.className = "org-status rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800";
+          card.classList.add("is-revoked");
+          status.className = "org-status kds-org-status kds-org-status--revoked";
           status.textContent = "Revoked";
           button.textContent = "Revoked";
-          button.className = "org-revoke mt-3 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400";
+          button.className = "org-revoke kds-action-btn";
+          button.disabled = true;
 
           const panel = panels[userId];
           if (panel) {
             setStatus(panel, "Error");
-            panel.querySelector(".reply").textContent = `Agent access revoked for ${userId}.`;
-            panel.querySelector(".tool-log").textContent = "No tool calls allowed while revoked.";
+            const replyEl = panel.querySelector(".reply");
+            const toolLogEl = panel.querySelector(".tool-log");
+            replyEl.className = "reply kds-reply kds-reply--error mt-2";
+            replyEl.textContent = `Agent access revoked for ${userId}.`;
+            toolLogEl.className = "tool-log kds-toollog kds-toollog--empty mt-2";
+            toolLogEl.textContent = "No tool calls allowed while revoked.";
           }
         });
       });
 
       document.addEventListener("click", async (event) => {
-        if (!event.target.classList.contains("request-upgrade")) {
-          return;
-        }
-
+        if (!event.target.classList.contains("request-upgrade")) return;
         const button = event.target;
         button.disabled = true;
         button.textContent = "Requesting";
@@ -800,7 +1579,7 @@
           upgradeQueue.classList.remove("hidden");
           upgradeMessage.textContent = "Intern requested code: write. SDE approval required.";
           button.textContent = "Request sent";
-          button.className = "request-upgrade mt-3 cursor-not-allowed rounded-md bg-slate-300 px-3 py-2 text-xs font-semibold text-slate-600";
+          button.className = "request-upgrade kds-action-btn kds-action-btn--sent mt-3";
         } catch (error) {
           button.disabled = false;
           button.textContent = `Request failed: ${error.message}`;
@@ -828,11 +1607,8 @@
 
       form.addEventListener("submit", (event) => {
         event.preventDefault();
-
         const message = promptInput.value.trim();
-        if (!message) {
-          return;
-        }
+        if (!message) return;
 
         runButton.disabled = true;
         runButton.textContent = "Running";
@@ -850,7 +1626,6 @@
                 const state = panels[doneUser.id].querySelector(".status-badge").textContent;
                 return state === "Complete" || state === "Error";
               });
-
               if (allDone) {
                 runButton.disabled = false;
                 runButton.textContent = "Run on all agents";

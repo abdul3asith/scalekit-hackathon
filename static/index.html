@@ -3,113 +3,202 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Role-Bounded GitHub Agent Demo</title>
+    <title>Role-Bounded GitHub Agents</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="min-h-screen bg-zinc-100 text-zinc-950">
-    <main class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 md:px-8">
-      <header class="mb-5 flex flex-col gap-4 border-b border-zinc-300 pb-5 md:flex-row md:items-end md:justify-between">
+  <body class="min-h-screen bg-slate-50 pb-24 text-slate-950">
+    <main class="mx-auto min-h-screen w-full max-w-7xl px-5 py-6 md:px-8">
+      <header class="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">Scalekit-themed hackathon demo</p>
-          <h1 class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Role-bounded GitHub agents</h1>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Scalekit-connected GitHub agents</p>
+          <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">One prompt, four blast radii</h1>
         </div>
-        <div id="active-user-badge" class="rounded-lg border border-zinc-300 bg-white px-5 py-3 shadow-sm">
-          <p class="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">Acting as</p>
-          <p id="active-user-name" class="mt-1 text-xl font-semibold text-zinc-950">Founder</p>
-          <p id="active-user-scope" class="mt-1 text-sm text-zinc-600">Admin token</p>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          Scalekit supplies the delegated GitHub tokens. The app-layer gate decides what each role can do.
         </div>
       </header>
 
-      <section class="grid gap-5 lg:grid-cols-[360px_1fr]">
-        <aside class="space-y-4">
-          <section class="rounded-lg border border-zinc-300 bg-white p-4 shadow-sm">
-            <div class="grid grid-cols-2 gap-2" id="user-tabs">
-              <button class="user-tab rounded-md border px-3 py-3 text-left text-sm transition" data-user-id="founder">
-                <span class="block font-semibold">Founder</span>
-                <span class="text-xs">Admin token</span>
-              </button>
-              <button class="user-tab rounded-md border px-3 py-3 text-left text-sm transition" data-user-id="sde">
-                <span class="block font-semibold">SDE</span>
-                <span class="text-xs">Write token</span>
-              </button>
-              <button class="user-tab rounded-md border px-3 py-3 text-left text-sm transition" data-user-id="hr">
-                <span class="block font-semibold">HR</span>
-                <span class="text-xs">Handbook writer</span>
-              </button>
-              <button class="user-tab rounded-md border px-3 py-3 text-left text-sm transition" data-user-id="intern">
-                <span class="block font-semibold">Intern</span>
-                <span class="text-xs">Read only</span>
-              </button>
-            </div>
-          </section>
+      <section class="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <form id="run-form" class="grid gap-3 lg:grid-cols-[1fr_auto]">
+          <textarea
+            id="shared-prompt"
+            class="min-h-24 resize-none rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-950 outline-none ring-slate-900 transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2"
+            autocomplete="off"
+          >Triage what's open and act on it</textarea>
+          <button
+            id="run-button"
+            class="h-12 rounded-md bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 lg:h-auto"
+            type="submit"
+          >
+            Run on all agents
+          </button>
+        </form>
 
-          <section class="rounded-lg border border-zinc-300 bg-white p-4 shadow-sm">
-            <h2 class="text-sm font-semibold text-zinc-950">Prompt</h2>
-            <form id="chat-form" class="mt-3 space-y-3">
-              <textarea
-                id="message-input"
-                class="min-h-28 w-full resize-none rounded-md border border-zinc-300 bg-white px-3 py-3 text-sm leading-6 text-zinc-950 outline-none ring-teal-500 transition placeholder:text-zinc-400 focus:border-teal-600 focus:ring-2"
-                autocomplete="off"
-              >Triage open issues and act on what you can</textarea>
-              <button
-                id="send-button"
-                class="h-11 w-full rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
-                type="submit"
-              >
-                Send
-              </button>
-            </form>
-            <div class="mt-4 flex flex-wrap gap-2" id="prompt-suggestions">
-              <button class="prompt-chip rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-teal-600 hover:text-teal-700" type="button" data-prompt="Triage open issues and act on what you can">Triage open issues</button>
-              <button class="prompt-chip rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-teal-600 hover:text-teal-700" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
-              <button class="prompt-chip rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-teal-600 hover:text-teal-700" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
-            </div>
-          </section>
-        </aside>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Triage what's open and act on it">Triage what's open</button>
+          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
+          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
+        </div>
+      </section>
 
-        <section class="grid gap-5 xl:grid-cols-2">
-          <article class="rounded-lg border border-zinc-300 bg-white p-5 shadow-sm">
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <h2 class="text-base font-semibold text-zinc-950">Agent Reply</h2>
-              <span id="reply-state" class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">Idle</span>
+      <section id="agent-grid" class="grid gap-4 lg:grid-cols-2">
+        <article class="agent-panel rounded-lg border border-purple-200 bg-white shadow-sm" data-user-id="founder">
+          <div class="border-l-4 border-purple-500 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-slate-950">Founder</h2>
+                <p class="text-sm text-slate-500">Admin token</p>
+              </div>
+              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
             </div>
-            <pre id="agent-reply" class="min-h-[520px] whitespace-pre-wrap rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-800">Send a message to run the agent.</pre>
-          </article>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: read</span>
+              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: write</span>
+              <span class="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100">code: admin</span>
+              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">handbook: read</span>
+            </div>
+          </div>
+          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
+              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
+            </section>
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
+              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
+            </section>
+          </div>
+        </article>
 
-          <article class="rounded-lg border border-zinc-300 bg-white p-5 shadow-sm">
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <h2 class="text-base font-semibold text-zinc-950">Tool Log</h2>
-              <span id="tool-count" class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">0 calls</span>
+        <article class="agent-panel rounded-lg border border-blue-200 bg-white shadow-sm" data-user-id="sde">
+          <div class="border-l-4 border-blue-500 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-slate-950">SDE</h2>
+                <p class="text-sm text-slate-500">Write token</p>
+              </div>
+              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
             </div>
-            <div id="tool-log" class="min-h-[520px] rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
-              No tool calls yet.
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">code: read</span>
+              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">code: write</span>
+              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">handbook: read</span>
             </div>
-          </article>
-        </section>
+          </div>
+          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
+              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
+            </section>
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
+              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
+            </section>
+          </div>
+        </article>
+
+        <article class="agent-panel rounded-lg border border-emerald-200 bg-white shadow-sm" data-user-id="hr">
+          <div class="border-l-4 border-emerald-500 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-slate-950">HR</h2>
+                <p class="text-sm text-slate-500">Code reader, handbook writer</p>
+              </div>
+              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">code: read</span>
+              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">handbook: read</span>
+              <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">handbook: write</span>
+            </div>
+          </div>
+          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
+              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
+            </section>
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
+              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
+            </section>
+          </div>
+        </article>
+
+        <article class="agent-panel rounded-lg border border-slate-300 bg-white shadow-sm" data-user-id="intern">
+          <div class="border-l-4 border-slate-500 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-slate-950">Intern</h2>
+                <p class="text-sm text-slate-500">Public read only</p>
+              </div>
+              <span class="status-badge rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Idle</span>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">code: read</span>
+            </div>
+          </div>
+          <div class="grid gap-4 border-t border-slate-200 p-4 xl:grid-cols-2">
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Agent Reply</h3>
+              <div class="reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">Ready.</div>
+            </section>
+            <section>
+              <h3 class="text-sm font-semibold text-slate-900">Tool Log</h3>
+              <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
+            </section>
+          </div>
+        </article>
       </section>
     </main>
 
+    <section id="audit-drawer" class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-300 bg-white shadow-2xl">
+      <button id="audit-toggle" class="flex w-full items-center justify-between px-5 py-3 text-left md:px-8" type="button">
+        <span>
+          <span class="block text-sm font-semibold text-slate-950">Audit Log — all agents, all actions</span>
+          <span id="audit-subtitle" class="block text-xs text-slate-500">No audit events yet.</span>
+        </span>
+        <span id="audit-chevron" class="text-lg font-semibold text-slate-500">⌃</span>
+      </button>
+      <div id="audit-content" class="hidden max-h-80 overflow-y-auto border-t border-slate-200 px-5 py-3 md:px-8">
+        <div id="audit-list" class="space-y-2 text-sm text-slate-700">
+          No audit events yet.
+        </div>
+      </div>
+    </section>
+
+    <template id="spinner-template">
+      <div class="flex min-h-64 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
+        <div class="flex items-center gap-3 text-sm font-medium text-slate-500">
+          <span class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></span>
+          Running agent
+        </div>
+      </div>
+    </template>
+
     <script>
-      const tabs = Array.from(document.querySelectorAll(".user-tab"));
+      const users = [
+        {id: "founder", name: "Founder"},
+        {id: "sde", name: "SDE"},
+        {id: "hr", name: "HR"},
+        {id: "intern", name: "Intern"}
+      ];
+
+      const form = document.getElementById("run-form");
+      const promptInput = document.getElementById("shared-prompt");
+      const runButton = document.getElementById("run-button");
       const promptChips = Array.from(document.querySelectorAll(".prompt-chip"));
-      const form = document.getElementById("chat-form");
-      const input = document.getElementById("message-input");
-      const sendButton = document.getElementById("send-button");
-      const replyPanel = document.getElementById("agent-reply");
-      const toolLogPanel = document.getElementById("tool-log");
-      const activeUserName = document.getElementById("active-user-name");
-      const activeUserScope = document.getElementById("active-user-scope");
-      const replyState = document.getElementById("reply-state");
-      const toolCount = document.getElementById("tool-count");
-
-      let activeUserId = "founder";
-
-      const users = {
-        founder: {label: "Founder", scope: "Admin token"},
-        sde: {label: "SDE", scope: "Write token"},
-        hr: {label: "HR", scope: "Code read, handbook write"},
-        intern: {label: "Intern", scope: "Public read only"}
-      };
+      const auditToggle = document.getElementById("audit-toggle");
+      const auditContent = document.getElementById("audit-content");
+      const auditList = document.getElementById("audit-list");
+      const auditSubtitle = document.getElementById("audit-subtitle");
+      const auditChevron = document.getElementById("audit-chevron");
+      const panels = Object.fromEntries(
+        Array.from(document.querySelectorAll(".agent-panel")).map((panel) => [panel.dataset.userId, panel])
+      );
+      let auditPollTimer = null;
+      let auditLastUpdateAt = 0;
+      let auditEventIds = new Set();
+      let auditDrawerOpen = false;
 
       function escapeHtml(value) {
         return String(value)
@@ -120,122 +209,242 @@
           .replaceAll("'", "&#039;");
       }
 
-      function renderTabs() {
-        tabs.forEach((tab) => {
-          const isActive = tab.dataset.userId === activeUserId;
-          tab.className = [
-            "user-tab rounded-md border px-3 py-3 text-left text-sm transition",
-            isActive
-              ? "border-teal-700 bg-teal-700 text-white shadow-sm"
-              : "border-zinc-300 bg-white text-zinc-700 hover:border-teal-600 hover:text-teal-700"
-          ].join(" ");
-        });
-        activeUserName.textContent = users[activeUserId].label;
-        activeUserScope.textContent = users[activeUserId].scope;
+      function setStatus(panel, state) {
+        const badge = panel.querySelector(".status-badge");
+        const classes = {
+          Idle: "bg-slate-100 text-slate-600",
+          Running: "bg-amber-100 text-amber-800",
+          Complete: "bg-emerald-100 text-emerald-800",
+          Error: "bg-red-100 text-red-800"
+        };
+
+        badge.className = `status-badge rounded-full px-3 py-1 text-xs font-medium ${classes[state] || classes.Idle}`;
+        badge.textContent = state;
       }
 
-      function renderToolLog(toolLog) {
-        toolCount.textContent = `${toolLog.length} ${toolLog.length === 1 ? "call" : "calls"}`;
+      function renderLoading(panel) {
+        const spinnerHtml = document.getElementById("spinner-template").innerHTML;
+        panel.querySelector(".reply").outerHTML = `<div class="reply">${spinnerHtml}</div>`;
+        panel.querySelector(".tool-log").outerHTML = `<div class="tool-log">${spinnerHtml}</div>`;
+        setStatus(panel, "Running");
+      }
+
+      function renderToolLog(panel, toolLog) {
+        const toolLogEl = panel.querySelector(".tool-log");
+        toolLogEl.className = "tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700";
 
         if (!toolLog || toolLog.length === 0) {
-          toolLogPanel.textContent = "No tool calls yet.";
+          toolLogEl.textContent = "No tool calls.";
           return;
         }
 
-        toolLogPanel.innerHTML = toolLog.map((entry, index) => {
+        toolLogEl.innerHTML = toolLog.map((entry) => {
+          const icon = entry.allowed ? "✓" : "✗";
           const badgeClass = entry.allowed
             ? "bg-emerald-100 text-emerald-800 ring-emerald-200"
             : "bg-red-100 text-red-800 ring-red-200";
-          const badgeText = entry.allowed ? "allowed" : "denied";
-          const args = entry.args ? JSON.stringify(entry.args, null, 2) : "{}";
+          const action = escapeHtml(entry.action || "unknown");
+          const result = escapeHtml(entry.result_summary || "");
 
           return `
-            <div class="mb-3 rounded-md border border-zinc-200 bg-white p-3 last:mb-0">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-xs font-medium uppercase tracking-[0.14em] text-zinc-400">Step ${index + 1}</p>
-                  <h3 class="mt-1 font-semibold text-zinc-950">${escapeHtml(entry.action)}</h3>
+            <div class="mb-2 rounded-md border border-slate-200 bg-white p-2.5 last:mb-0">
+              <div class="flex items-start gap-2">
+                <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${badgeClass}">${icon}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900">${action}</p>
+                  <p class="mt-1 text-xs leading-5 text-slate-600">${result}</p>
                 </div>
-                <span class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badgeClass}">${badgeText}</span>
               </div>
-              <dl class="mt-3 grid gap-2 text-xs leading-5">
-                <div>
-                  <dt class="font-semibold text-zinc-500">Target</dt>
-                  <dd class="text-zinc-800">${escapeHtml(entry.target || "not specified")}</dd>
-                </div>
-                <div>
-                  <dt class="font-semibold text-zinc-500">Scope decision</dt>
-                  <dd class="text-zinc-800">${escapeHtml(entry.scope_decision || (entry.allowed ? "Allowed" : "Denied"))}</dd>
-                </div>
-                <div>
-                  <dt class="font-semibold text-zinc-500">Result</dt>
-                  <dd class="text-zinc-800">${escapeHtml(entry.result_summary || "")}</dd>
-                </div>
-              </dl>
-              <details class="mt-3">
-                <summary class="cursor-pointer text-xs font-medium text-zinc-500">Args</summary>
-                <pre class="mt-2 overflow-x-auto rounded bg-zinc-100 p-2 text-[11px] leading-5 text-zinc-600">${escapeHtml(args)}</pre>
-              </details>
             </div>
           `;
         }).join("");
       }
 
-      tabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-          activeUserId = tab.dataset.userId;
-          renderTabs();
+      function renderSuccess(userId, data) {
+        const panel = panels[userId];
+        const replyEl = panel.querySelector(".reply");
+        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700";
+        replyEl.textContent = data.final_reply || "No reply returned.";
+        renderToolLog(panel, data.tool_log || []);
+        setStatus(panel, "Complete");
+      }
+
+      function renderError(userId, error) {
+        const panel = panels[userId];
+        const replyEl = panel.querySelector(".reply");
+        const toolLogEl = panel.querySelector(".tool-log");
+        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800";
+        toolLogEl.className = "tool-log mt-2 min-h-64 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800";
+        replyEl.textContent = `Request failed: ${error.message}`;
+        toolLogEl.textContent = "No tool log returned.";
+        setStatus(panel, "Error");
+      }
+
+      async function runAgent(userId, message) {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({user_id: userId, message})
         });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Request failed");
+        }
+        return data;
+      }
+
+      function roleBadge(userId) {
+        const classes = {
+          founder: "bg-purple-100 text-purple-800 ring-purple-200",
+          sde: "bg-blue-100 text-blue-800 ring-blue-200",
+          hr: "bg-emerald-100 text-emerald-800 ring-emerald-200",
+          intern: "bg-slate-100 text-slate-800 ring-slate-200"
+        };
+        const label = users.find((user) => user.id === userId)?.name || userId;
+        return `<span class="rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${classes[userId] || classes.intern}">${escapeHtml(label)}</span>`;
+      }
+
+      function renderAudit(events, newIds) {
+        auditSubtitle.textContent = `${events.length} ${events.length === 1 ? "event" : "events"} recorded`;
+
+        if (!events.length) {
+          auditList.textContent = "No audit events yet.";
+          return;
+        }
+
+        auditList.innerHTML = events.map((event) => {
+          const id = auditId(event);
+          const allowedClass = event.allowed
+            ? "border-emerald-200 bg-emerald-50"
+            : "border-red-200 bg-red-50";
+          const dotClass = event.allowed ? "bg-emerald-500" : "bg-red-500";
+          const highlightClass = newIds.has(id) ? "ring-2 ring-amber-300" : "";
+          const time = new Date(event.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          });
+          const result = escapeHtml(event.result_summary || "").slice(0, 180);
+
+          return `
+            <div class="rounded-md border p-3 transition ${allowedClass} ${highlightClass}">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-medium text-slate-500">${escapeHtml(time)}</span>
+                ${roleBadge(event.user_id)}
+                <span class="font-semibold text-slate-950">${escapeHtml(event.action)}</span>
+                <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-600">
+                  <span class="h-2 w-2 rounded-full ${dotClass}"></span>
+                  ${event.allowed ? "allowed" : "denied"}
+                </span>
+                <span class="text-xs text-slate-500">requires ${escapeHtml(event.required_scope || "unknown")}</span>
+              </div>
+              <p class="mt-2 text-xs leading-5 text-slate-700">${result}</p>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function auditId(event) {
+        return `${event.timestamp}|${event.user_id}|${event.action}|${event.result_summary}`;
+      }
+
+      async function fetchAudit() {
+        const response = await fetch("/audit");
+        if (!response.ok) {
+          return;
+        }
+
+        const events = await response.json();
+        if (!events.length) {
+          if (Date.now() - auditLastUpdateAt > 5000) {
+            stopAuditPolling();
+          }
+          return;
+        }
+
+        const newIds = new Set();
+
+        events.forEach((event) => {
+          const id = auditId(event);
+          if (!auditEventIds.has(id)) {
+            newIds.add(id);
+            auditEventIds.add(id);
+          }
+        });
+
+        if (newIds.size > 0) {
+          auditLastUpdateAt = Date.now();
+        } else if (Date.now() - auditLastUpdateAt > 5000) {
+          stopAuditPolling();
+        }
+
+        renderAudit(events, newIds);
+        window.setTimeout(() => renderAudit(events, new Set()), 1200);
+      }
+
+      function startAuditPolling() {
+        stopAuditPolling();
+        auditDrawerOpen = true;
+        auditContent.classList.remove("hidden");
+        auditChevron.textContent = "⌄";
+        auditLastUpdateAt = Date.now();
+        fetchAudit();
+        auditPollTimer = window.setInterval(fetchAudit, 1000);
+      }
+
+      function stopAuditPolling() {
+        if (auditPollTimer) {
+          window.clearInterval(auditPollTimer);
+          auditPollTimer = null;
+        }
+      }
+
+      auditToggle.addEventListener("click", () => {
+        auditDrawerOpen = !auditDrawerOpen;
+        auditContent.classList.toggle("hidden", !auditDrawerOpen);
+        auditChevron.textContent = auditDrawerOpen ? "⌄" : "⌃";
       });
 
       promptChips.forEach((chip) => {
         chip.addEventListener("click", () => {
-          input.value = chip.dataset.prompt;
-          input.focus();
+          promptInput.value = chip.dataset.prompt;
+          promptInput.focus();
         });
       });
 
-      form.addEventListener("submit", async (event) => {
+      form.addEventListener("submit", (event) => {
         event.preventDefault();
 
-        const message = input.value.trim();
+        const message = promptInput.value.trim();
         if (!message) {
           return;
         }
 
-        sendButton.disabled = true;
-        sendButton.textContent = "Running";
-        replyState.textContent = "Running";
-        replyPanel.textContent = "Waiting for response...";
-        toolLogPanel.textContent = "Waiting for tool log...";
-        toolCount.textContent = "0 calls";
+        runButton.disabled = true;
+        runButton.textContent = "Running";
+        startAuditPolling();
 
-        try {
-          const response = await fetch("/chat", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({user_id: activeUserId, message})
-          });
+        users.forEach((user) => {
+          const panel = panels[user.id];
+          renderLoading(panel);
 
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.detail || "Request failed");
-          }
-          replyPanel.textContent = data.final_reply || "No reply returned.";
-          renderToolLog(data.tool_log || []);
-          replyState.textContent = "Complete";
-        } catch (error) {
-          replyPanel.textContent = `Request failed: ${error.message}`;
-          toolLogPanel.textContent = "No tool log returned.";
-          toolCount.textContent = "0 calls";
-          replyState.textContent = "Error";
-        } finally {
-          sendButton.disabled = false;
-          sendButton.textContent = "Send";
-        }
+          runAgent(user.id, message)
+            .then((data) => renderSuccess(user.id, data))
+            .catch((error) => renderError(user.id, error))
+            .finally(() => {
+              const allDone = users.every((doneUser) => {
+                const state = panels[doneUser.id].querySelector(".status-badge").textContent;
+                return state === "Complete" || state === "Error";
+              });
+
+              if (allDone) {
+                runButton.disabled = false;
+                runButton.textContent = "Run on all agents";
+              }
+            });
+        });
       });
-
-      renderTabs();
     </script>
   </body>
 </html>

@@ -10,6 +10,7 @@ from scalekit_shim import (
     ACTION_REQUIREMENTS,
     USER_SCOPES,
     ScopeDenied,
+    audit_event,
     get_token,
     require_scope,
 )
@@ -41,6 +42,19 @@ TOOLS: list[dict[str, Any]] = [
                 "number": {"type": "integer", "description": "Issue or PR number."}
             },
             "required": ["number"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "create_issue",
+        "description": "Create a new issue in the code repo. Use for filing bugs, features, or tasks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Issue title."},
+                "body": {"type": "string", "description": "Issue body."},
+            },
+            "required": ["title"],
             "additionalProperties": False,
         },
     },
@@ -191,6 +205,8 @@ def _summarize_result(result: dict[str, Any]) -> str:
 
     if "count" in result:
         return f"Returned {result['count']} open issues/PRs."
+    if "number" in result and "url" in result:
+        return f"Created issue #{result['number']}: {result['url']}"
     if "comment_url" in result:
         return f"Created comment: {result['comment_url']}"
     if result.get("deleted"):
@@ -226,6 +242,8 @@ def _scope_denied_result(exc: ScopeDenied) -> dict[str, Any]:
 
 
 def _target_for_tool(action: str, args: dict[str, Any]) -> str:
+    if action == "create_issue":
+        return f"new issue: {args.get('title')}"
     if action in {"read_issue", "comment_on_issue", "assign_issue", "label_issue", "close_issue"}:
         return f"issue/PR #{args.get('number')}"
     if action == "merge_pr":
@@ -272,6 +290,13 @@ def _call_tool(user_id: str, action: str, args: dict[str, Any]) -> tuple[bool, d
             return True, github_tools.list_issues(token, repo)
         if action == "read_issue":
             return True, github_tools.read_issue(token, repo, int(args["number"]))
+        if action == "create_issue":
+            return True, github_tools.create_issue(
+                token,
+                repo,
+                str(args["title"]),
+                str(args.get("body", "")),
+            )
         if action == "comment_on_issue":
             return True, github_tools.comment_on_issue(
                 token,
@@ -403,6 +428,7 @@ def run_agent(user_id: str, message: str) -> dict[str, Any]:
                 f"agent loop {loop_number + 1}: tool {action} allowed={allowed} summary={summary}",
                 flush=True,
             )
+            audit_event(user_id, action, allowed, summary)
 
             tool_log.append(
                 {

@@ -131,6 +131,35 @@ def read_issue(token: str, repo: str, number: int) -> dict[str, Any]:
     }
 
 
+def create_issue(token: str, repo: str, title: str, body: str = "") -> dict[str, Any]:
+    response = _request(
+        "POST",
+        f"/repos/{repo}/issues",
+        token,
+        json={"title": title, "body": body},
+    )
+    if not response["ok"]:
+        return {
+            "ok": False,
+            "status": response.get("status_code"),
+            "error": response.get("error"),
+        }
+
+    if response.get("status_code") not in {200, 201}:
+        return {
+            "ok": False,
+            "status": response.get("status_code"),
+            "error": response.get("data"),
+        }
+
+    issue = response["data"]
+    return {
+        "ok": True,
+        "number": issue.get("number"),
+        "url": issue.get("html_url"),
+    }
+
+
 def comment_on_issue(token: str, repo: str, number: int, body: str) -> dict[str, Any]:
     response = _request(
         "POST",

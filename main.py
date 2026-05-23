@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from agent import run_agent
+from scalekit_shim import AUDIT_LOG
 
 
 app = FastAPI(title="Role-Bounded GitHub Agent Demo")
@@ -25,6 +26,15 @@ def index() -> FileResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/audit")
+def audit(since: str | None = None) -> list[dict[str, Any]]:
+    events = AUDIT_LOG
+    if since:
+        events = [event for event in events if event["timestamp"] > since]
+
+    return sorted(events, key=lambda event: event["timestamp"], reverse=True)
 
 
 @app.post("/chat")

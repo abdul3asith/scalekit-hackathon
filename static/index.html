@@ -5,6 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Role-Bounded GitHub Agents</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <style>
+      .reply-prose { color: rgb(51 65 85); font-size: 0.875rem; line-height: 1.6; }
+      .reply-prose > * + * { margin-top: 0.65rem; }
+      .reply-prose > *:first-child { margin-top: 0; }
+
+      .reply-prose h1,
+      .reply-prose h2 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: rgb(15 23 42);
+        letter-spacing: -0.01em;
+        margin-top: 1.25rem;
+        padding-bottom: 0.375rem;
+        border-bottom: 1px solid rgb(226 232 240);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .reply-prose h1::before,
+      .reply-prose h2::before {
+        content: "";
+        width: 0.1875rem;
+        height: 0.875rem;
+        background: var(--reply-accent, rgb(100 116 139));
+        border-radius: 999px;
+        flex-shrink: 0;
+      }
+      .reply-prose h3 {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: rgb(100 116 139);
+        margin-top: 1rem;
+      }
+      .reply-prose h4 {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: rgb(30 41 59);
+        margin-top: 0.875rem;
+      }
+
+      .reply-prose p { margin: 0; }
+      .reply-prose strong { color: rgb(15 23 42); font-weight: 600; }
+      .reply-prose em { color: rgb(71 85 105); }
+
+      .reply-prose code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.75rem;
+        padding: 0.0625rem 0.375rem;
+        background: rgb(241 245 249);
+        color: rgb(15 23 42);
+        border-radius: 0.3125rem;
+        border: 1px solid rgb(226 232 240);
+        white-space: nowrap;
+      }
+      .reply-prose pre {
+        background: rgb(15 23 42);
+        color: rgb(226 232 240);
+        padding: 0.75rem 0.875rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.75rem;
+        line-height: 1.55;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .reply-prose pre code {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        white-space: pre;
+      }
+
+      .reply-prose ul,
+      .reply-prose ol {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+      .reply-prose ul > li,
+      .reply-prose ol > li {
+        position: relative;
+        padding-left: 1.125rem;
+        margin-top: 0.3125rem;
+      }
+      .reply-prose ul > li::before {
+        content: "";
+        position: absolute;
+        left: 0.1875rem;
+        top: 0.6875rem;
+        width: 0.3125rem;
+        height: 0.3125rem;
+        background: var(--reply-accent, rgb(100 116 139));
+        transform: rotate(45deg);
+        border-radius: 0.5px;
+      }
+      .reply-prose ol { counter-reset: rp; }
+      .reply-prose ol > li {
+        counter-increment: rp;
+        padding-left: 1.375rem;
+      }
+      .reply-prose ol > li::before {
+        content: counter(rp);
+        position: absolute;
+        left: 0;
+        top: 0.125rem;
+        min-width: 1rem;
+        text-align: right;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: var(--reply-accent, rgb(100 116 139));
+        font-variant-numeric: tabular-nums;
+      }
+      .reply-prose li > ul,
+      .reply-prose li > ol { margin-top: 0.25rem; }
+      .reply-prose li > p { display: inline; }
+
+      .reply-prose blockquote {
+        border-left: 2px solid var(--reply-accent, rgb(148 163 184));
+        padding: 0.125rem 0 0.125rem 0.75rem;
+        color: rgb(71 85 105);
+        font-style: italic;
+      }
+      .reply-prose hr {
+        border: 0;
+        border-top: 1px dashed rgb(203 213 225);
+        margin: 0.75rem 0;
+      }
+      .reply-prose a {
+        color: rgb(15 23 42);
+        text-decoration: underline;
+        text-decoration-color: var(--reply-accent, rgb(148 163 184));
+        text-decoration-thickness: 1.5px;
+        text-underline-offset: 2px;
+        font-weight: 500;
+      }
+      .reply-prose a:hover { text-decoration-color: rgb(15 23 42); }
+
+      .reply-prose table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8125rem;
+      }
+      .reply-prose th,
+      .reply-prose td {
+        text-align: left;
+        padding: 0.4375rem 0.625rem;
+        border-bottom: 1px solid rgb(226 232 240);
+      }
+      .reply-prose th {
+        background: rgb(248 250 252);
+        font-weight: 600;
+        color: rgb(15 23 42);
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .agent-panel[data-user-id="founder"] { --reply-accent: rgb(147 51 234); }
+      .agent-panel[data-user-id="sde"] { --reply-accent: rgb(37 99 235); }
+      .agent-panel[data-user-id="hr"] { --reply-accent: rgb(5 150 105); }
+      .agent-panel[data-user-id="intern"] { --reply-accent: rgb(71 85 105); }
+    </style>
   </head>
   <body class="min-h-screen bg-slate-50 pb-24 text-slate-950">
     <main class="mx-auto min-h-screen w-full max-w-7xl px-5 py-6 md:px-8">
@@ -260,11 +426,17 @@
         }).join("");
       }
 
+      function renderMarkdown(text) {
+        const source = (text && text.trim()) ? text : "_No reply returned._";
+        const html = window.marked.parse(source, {gfm: true, breaks: false});
+        return window.DOMPurify.sanitize(html, {USE_PROFILES: {html: true}});
+      }
+
       function renderSuccess(userId, data) {
         const panel = panels[userId];
         const replyEl = panel.querySelector(".reply");
-        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700";
-        replyEl.textContent = data.final_reply || "No reply returned.";
+        replyEl.className = "reply reply-prose mt-2 min-h-64 overflow-auto rounded-md border border-slate-200 bg-white p-4";
+        replyEl.innerHTML = renderMarkdown(data.final_reply);
         renderToolLog(panel, data.tool_log || []);
         setStatus(panel, "Complete");
       }
@@ -273,7 +445,7 @@
         const panel = panels[userId];
         const replyEl = panel.querySelector(".reply");
         const toolLogEl = panel.querySelector(".tool-log");
-        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800";
+        replyEl.className = "reply mt-2 min-h-64 whitespace-pre-wrap rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800 font-mono";
         toolLogEl.className = "tool-log mt-2 min-h-64 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800";
         replyEl.textContent = `Request failed: ${error.message}`;
         toolLogEl.textContent = "No tool log returned.";

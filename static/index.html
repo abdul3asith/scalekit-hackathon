@@ -184,30 +184,109 @@
         </div>
       </header>
 
-      <section class="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <form id="run-form" class="grid gap-3 lg:grid-cols-[1fr_auto]">
-          <textarea
-            id="shared-prompt"
-            class="min-h-24 resize-none rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-950 outline-none ring-slate-900 transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2"
-            autocomplete="off"
-          >Triage what's open and act on it</textarea>
-          <button
-            id="run-button"
-            class="h-12 rounded-md bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 lg:h-auto"
-            type="submit"
-          >
-            Run on all agents
-          </button>
-        </form>
+      <section class="grid gap-5 xl:grid-cols-[320px_1fr]">
+        <aside class="rounded-lg border border-slate-200 bg-white shadow-sm xl:sticky xl:top-6 xl:self-start">
+          <div class="border-b border-slate-200 p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Org settings</p>
+            <h2 class="mt-1 text-lg font-semibold text-slate-950">Agent access</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Static control plane for the demo. Revokes update this panel only.</p>
+          </div>
+          <div id="upgrade-queue" class="hidden border-b border-slate-200 bg-amber-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">SDE notification</p>
+            <p id="upgrade-message" class="mt-2 text-sm leading-6 text-amber-900"></p>
+            <button id="approve-upgrade" class="mt-3 w-full rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700" type="button">
+              Approve write access
+            </button>
+          </div>
+          <div class="space-y-3 p-4">
+            <article class="org-user rounded-md border border-purple-200 bg-purple-50/40 p-3" data-org-user="founder">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold text-slate-950">Founder</h3>
+                  <p class="text-xs text-slate-500">Admin token</p>
+                </div>
+                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: read</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: write</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-purple-800 ring-1 ring-purple-200">code: admin</span>
+              </div>
+              <button class="org-revoke mt-3 w-full rounded-md border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800 transition hover:border-purple-400" type="button">Revoke</button>
+            </article>
 
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Triage what's open and act on it">Triage what's open</button>
-          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
-          <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
-        </div>
-      </section>
+            <article class="org-user rounded-md border border-blue-200 bg-blue-50/40 p-3" data-org-user="sde">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold text-slate-950">SDE</h3>
+                  <p class="text-xs text-slate-500">Write token</p>
+                </div>
+                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-blue-800 ring-1 ring-blue-200">code: read</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-blue-800 ring-1 ring-blue-200">code: write</span>
+              </div>
+              <button class="org-revoke mt-3 w-full rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-800 transition hover:border-blue-400" type="button">Revoke</button>
+            </article>
 
-      <section id="agent-grid" class="grid gap-4 lg:grid-cols-2">
+            <article class="org-user rounded-md border border-emerald-200 bg-emerald-50/40 p-3" data-org-user="hr">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold text-slate-950">HR</h3>
+                  <p class="text-xs text-slate-500">Handbook writer</p>
+                </div>
+                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-emerald-800 ring-1 ring-emerald-200">code: read</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-emerald-800 ring-1 ring-emerald-200">handbook: write</span>
+              </div>
+              <button class="org-revoke mt-3 w-full rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400" type="button">Revoke</button>
+            </article>
+
+            <article class="org-user rounded-md border border-slate-200 bg-slate-50 p-3" data-org-user="intern">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold text-slate-950">Intern</h3>
+                  <p class="text-xs text-slate-500">Public read only</p>
+                </div>
+                <span class="org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Active</span>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">code: read</span>
+                <span id="intern-write-scope" class="hidden rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">code: write</span>
+              </div>
+              <button class="org-revoke mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500" type="button">Revoke</button>
+            </article>
+          </div>
+        </aside>
+
+        <div>
+          <section class="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <form id="run-form" class="grid gap-3 lg:grid-cols-[1fr_auto]">
+              <textarea
+                id="shared-prompt"
+                class="min-h-24 resize-none rounded-md border border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-950 outline-none ring-slate-900 transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2"
+                autocomplete="off"
+              >Triage what's open and act on it</textarea>
+              <button
+                id="run-button"
+                class="h-12 rounded-md bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 lg:h-auto"
+                type="submit"
+              >
+                Run on all agents
+              </button>
+            </form>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Triage what's open and act on it">Triage what's open</button>
+              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Review PR #1 and act on it">Review PR #1</button>
+              <button class="prompt-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950" type="button" data-prompt="Summarize what the team is working on">Summarize team work</button>
+            </div>
+          </section>
+
+          <section id="agent-grid" class="grid gap-4 lg:grid-cols-2">
         <article class="agent-panel rounded-lg border border-purple-200 bg-white shadow-sm" data-user-id="founder">
           <div class="border-l-4 border-purple-500 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -313,7 +392,16 @@
               <div class="tool-log mt-2 min-h-64 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">No tool calls yet.</div>
             </section>
           </div>
+          <div class="scope-request-slot hidden border-t border-slate-200 bg-amber-50 p-4">
+            <p class="text-sm font-semibold text-amber-950">I'd need write access to do this.</p>
+            <p class="mt-1 text-xs leading-5 text-amber-900">Request approval from SDE?</p>
+            <button class="request-upgrade mt-3 rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700" type="button">
+              Request from SDE
+            </button>
+          </div>
         </article>
+          </section>
+        </div>
       </section>
     </main>
 
@@ -353,6 +441,11 @@
       const promptInput = document.getElementById("shared-prompt");
       const runButton = document.getElementById("run-button");
       const promptChips = Array.from(document.querySelectorAll(".prompt-chip"));
+      const orgRevokeButtons = Array.from(document.querySelectorAll(".org-revoke"));
+      const upgradeQueue = document.getElementById("upgrade-queue");
+      const upgradeMessage = document.getElementById("upgrade-message");
+      const approveUpgradeButton = document.getElementById("approve-upgrade");
+      const internWriteScope = document.getElementById("intern-write-scope");
       const auditToggle = document.getElementById("audit-toggle");
       const auditContent = document.getElementById("audit-content");
       const auditList = document.getElementById("audit-list");
@@ -365,6 +458,7 @@
       let auditLastUpdateAt = 0;
       let auditEventIds = new Set();
       let auditDrawerOpen = false;
+      let pendingUpgradeRequest = null;
 
       function escapeHtml(value) {
         return String(value)
@@ -392,6 +486,10 @@
         const spinnerHtml = document.getElementById("spinner-template").innerHTML;
         panel.querySelector(".reply").outerHTML = `<div class="reply">${spinnerHtml}</div>`;
         panel.querySelector(".tool-log").outerHTML = `<div class="tool-log">${spinnerHtml}</div>`;
+        const requestSlot = panel.querySelector(".scope-request-slot");
+        if (requestSlot) {
+          requestSlot.classList.add("hidden");
+        }
         setStatus(panel, "Running");
       }
 
@@ -438,6 +536,7 @@
         replyEl.className = "reply reply-prose mt-2 min-h-64 overflow-auto rounded-md border border-slate-200 bg-white p-4";
         replyEl.innerHTML = renderMarkdown(data.final_reply);
         renderToolLog(panel, data.tool_log || []);
+        maybeShowUpgradeRequest(userId, data.tool_log || []);
         setStatus(panel, "Complete");
       }
 
@@ -462,6 +561,83 @@
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Request failed");
+        }
+        return data;
+      }
+
+      function maybeShowUpgradeRequest(userId, toolLog) {
+        if (userId !== "intern") {
+          return;
+        }
+
+        const deniedWrite = toolLog.some((entry) => {
+          const decision = `${entry.scope_decision || ""} ${entry.result_summary || ""}`.toLowerCase();
+          return entry.allowed === false && decision.includes("write");
+        });
+
+        const panel = panels.intern;
+        const requestSlot = panel.querySelector(".scope-request-slot");
+        if (deniedWrite) {
+          requestSlot.classList.remove("hidden");
+        } else {
+          requestSlot.classList.add("hidden");
+        }
+      }
+
+      async function createUpgradeRequest() {
+        const response = await fetch("/scope-requests", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            user_id: "intern",
+            repo_key: "code_repo",
+            scope: "write",
+            reason: "Intern needs write access for the requested GitHub action."
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Scope request failed");
+        }
+        return data;
+      }
+
+      async function approveUpgradeRequest() {
+        if (!pendingUpgradeRequest) {
+          return;
+        }
+
+        const response = await fetch(`/scope-requests/${pendingUpgradeRequest.id}/approve`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({approver_id: "sde"})
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Approval failed");
+        }
+
+        pendingUpgradeRequest = data;
+        upgradeMessage.textContent = "Approved. Intern now has code: write in the app-layer gate.";
+        approveUpgradeButton.disabled = true;
+        approveUpgradeButton.textContent = "Approved";
+        approveUpgradeButton.className = "mt-3 w-full cursor-not-allowed rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white";
+        internWriteScope.classList.remove("hidden");
+
+        const internStatus = document.querySelector('[data-org-user="intern"] .org-status');
+        internStatus.className = "org-status rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800";
+        internStatus.textContent = "Upgraded";
+      }
+
+      async function revokeAgent(userId) {
+        const response = await fetch(`/users/${userId}/revoke`, {
+          method: "POST"
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Revoke failed");
         }
         return data;
       }
@@ -576,6 +752,71 @@
         auditDrawerOpen = !auditDrawerOpen;
         auditContent.classList.toggle("hidden", !auditDrawerOpen);
         auditChevron.textContent = auditDrawerOpen ? "⌄" : "⌃";
+      });
+
+      orgRevokeButtons.forEach((button) => {
+        button.addEventListener("click", async () => {
+          const card = button.closest(".org-user");
+          const status = card.querySelector(".org-status");
+          const userId = card.dataset.orgUser;
+
+          button.disabled = true;
+          button.textContent = "Revoking";
+
+          try {
+            await revokeAgent(userId);
+          } catch (error) {
+            button.disabled = false;
+            button.textContent = `Revoke failed: ${error.message}`;
+            return;
+          }
+
+          card.classList.add("opacity-60");
+          status.className = "org-status rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800";
+          status.textContent = "Revoked";
+          button.textContent = "Revoked";
+          button.className = "org-revoke mt-3 w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400";
+
+          const panel = panels[userId];
+          if (panel) {
+            setStatus(panel, "Error");
+            panel.querySelector(".reply").textContent = `Agent access revoked for ${userId}.`;
+            panel.querySelector(".tool-log").textContent = "No tool calls allowed while revoked.";
+          }
+        });
+      });
+
+      document.addEventListener("click", async (event) => {
+        if (!event.target.classList.contains("request-upgrade")) {
+          return;
+        }
+
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = "Requesting";
+
+        try {
+          pendingUpgradeRequest = await createUpgradeRequest();
+          upgradeQueue.classList.remove("hidden");
+          upgradeMessage.textContent = "Intern requested code: write. SDE approval required.";
+          button.textContent = "Request sent";
+          button.className = "request-upgrade mt-3 cursor-not-allowed rounded-md bg-slate-300 px-3 py-2 text-xs font-semibold text-slate-600";
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = `Request failed: ${error.message}`;
+        }
+      });
+
+      approveUpgradeButton.addEventListener("click", async () => {
+        approveUpgradeButton.disabled = true;
+        approveUpgradeButton.textContent = "Approving";
+
+        try {
+          await approveUpgradeRequest();
+        } catch (error) {
+          approveUpgradeButton.disabled = false;
+          approveUpgradeButton.textContent = `Approval failed: ${error.message}`;
+        }
       });
 
       promptChips.forEach((chip) => {

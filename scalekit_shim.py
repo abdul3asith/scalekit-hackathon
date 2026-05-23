@@ -16,6 +16,8 @@ except ImportError:
 
 GITHUB_CONNECTION_NAME = "github-23"
 AUDIT_LOG: list[dict[str, Any]] = []
+SCOPE_REQUESTS: list[dict[str, Any]] = []
+REVOKED_USERS: set[str] = set()
 
 
 class ScopeDenied(Exception):
@@ -109,6 +111,9 @@ SCALEKIT_CLIENT = _init_scalekit_client()
 
 
 def check_scope(user_id: str, action: str) -> bool:
+    if is_user_revoked(user_id):
+        return False
+
     if user_id not in USER_SCOPES:
         return False
 
@@ -118,6 +123,62 @@ def check_scope(user_id: str, action: str) -> bool:
 
     repo_key, required_scope = requirement
     return required_scope in USER_SCOPES[user_id].get(repo_key, [])
+
+
+def is_user_revoked(user_id: str) -> bool:
+    return user_id in REVOKED_USERS
+
+
+def revoke_user(user_id: str) -> dict[str, Any]:
+    if user_id not in USER_SCOPES:
+        raise ValueError(f"Unknown user_id: {user_id}")
+
+    REVOKED_USERS.add(user_id)
+    return {
+        "user_id": user_id,
+        "revoked": True,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
+def list_scope_requests() -> list[dict[str, Any]]:
+    return sorted(SCOPE_REQUESTS, key=lambda request: request["timestamp"], reverse=True)
+
+
+def request_scope_upgrade(user_id: str, repo_key: str, scope: str, reason: str) -> dict[str, Any]:
+    request = {
+        "id": str(len(SCOPE_REQUESTS) + 1),
+        "timestamp": datetime.now(UTC).isoformat(),
+        "user_id": user_id,
+        "repo_key": repo_key,
+        "scope": scope,
+        "reason": reason,
+        "status": "pending",
+        "approver_id": None,
+        "approved_at": None,
+    }
+    SCOPE_REQUESTS.append(request)
+    return request
+
+
+def approve_scope_upgrade(request_id: str, approver_id: str) -> dict[str, Any]:
+    if approver_id != "sde":
+        raise PermissionError("Only SDE can approve this demo upgrade request")
+
+    for request in SCOPE_REQUESTS:
+        if request["id"] == request_id:
+            if request["status"] != "approved":
+                scopes = USER_SCOPES.setdefault(request["user_id"], {}).setdefault(request["repo_key"], [])
+                if request["scope"] not in scopes:
+                    scopes.append(request["scope"])
+
+                request["status"] = "approved"
+                request["approver_id"] = approver_id
+                request["approved_at"] = datetime.now(UTC).isoformat()
+
+            return request
+
+    raise ValueError(f"Unknown scope request: {request_id}")
 
 
 def _fallback_pat(user_id: str, reason: str) -> str:
@@ -160,6 +221,8 @@ def _extract_access_token(response: Any) -> str:
 def get_token(user_id: str) -> str:
     if user_id not in USER_SCOPES:
         raise ValueError(f"Unknown user_id: {user_id}")
+    if is_user_revoked(user_id):
+        raise PermissionError(f"Agent access revoked for {user_id}")
 
     if SCALEKIT_CLIENT is None:
         return _fallback_pat(user_id, "Scalekit client is unavailable")
@@ -175,6 +238,9 @@ def get_token(user_id: str) -> str:
 
 
 def require_scope(user_id: str, action: str) -> None:
+    if is_user_revoked(user_id):
+        raise PermissionError(f"Agent access revoked for {user_id}")
+
     requirement = ACTION_REQUIREMENTS.get(action)
     if requirement is None:
         raise ValueError(f"Unknown action: {action}")
